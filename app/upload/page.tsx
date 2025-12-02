@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createWorker } from "tesseract.js";
 
@@ -29,6 +29,16 @@ export default function UploadPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [parsedData, setParsedData] = useState<ParsedData | null>(null);
   const [progress, setProgress] = useState(0);
+  const [processingStep, setProcessingStep] = useState("");
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const isVideoFile = (file: File) => {
+    return file.type.startsWith("video/");
+  };
+
+  const isImageFile = (file: File) => {
+    return file.type.startsWith("image/");
+  };
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -44,8 +54,8 @@ export default function UploadPage() {
     e.preventDefault();
     setIsDragging(false);
 
-    const droppedFiles = Array.from(e.dataTransfer.files).filter((file) =>
-      file.type.startsWith("image/")
+    const droppedFiles = Array.from(e.dataTransfer.files).filter(
+      (file) => isImageFile(file) || isVideoFile(file)
     );
 
     if (droppedFiles.length > 0) {
@@ -53,15 +63,71 @@ export default function UploadPage() {
     }
   }, []);
 
-  const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const selectedFiles = Array.from(e.target.files);
-      setFiles((prev) => [...prev, ...selectedFiles]);
-    }
-  }, []);
+  const handleFileInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files) {
+        const selectedFiles = Array.from(e.target.files);
+        setFiles((prev) => [...prev, ...selectedFiles]);
+      }
+    },
+    []
+  );
 
   const removeFile = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Extract frames from video
+  const extractFramesFromVideo = async (
+    videoFile: File
+  ): Promise<string[]> => {
+    return new Promise((resolve, reject) => {
+      const video = document.createElement("video");
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      const frames: string[] = [];
+
+      video.preload = "metadata";
+      video.src = URL.createObjectURL(videoFile);
+
+      video.onloadedmetadata = () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const duration = video.duration;
+
+        // Extract frames every 0.5 seconds
+        const frameInterval = 0.5;
+        const totalFrames = Math.floor(duration / frameInterval);
+        let currentFrame = 0;
+
+        const captureFrame = () => {
+          if (currentFrame >= totalFrames) {
+            URL.revokeObjectURL(video.src);
+            resolve(frames);
+            return;
+          }
+
+          video.currentTime = currentFrame * frameInterval;
+        };
+
+        video.onseeked = () => {
+          if (ctx) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            frames.push(canvas.toDataURL("image/jpeg", 0.8));
+            currentFrame++;
+            setProgress(Math.round((currentFrame / totalFrames) * 50)); // First 50% for extraction
+            captureFrame();
+          }
+        };
+
+        video.onerror = () => {
+          URL.revokeObjectURL(video.src);
+          reject(new Error("Error loading video"));
+        };
+
+        captureFrame();
+      };
+    });
   };
 
   const processImages = async () => {
@@ -69,26 +135,56 @@ export default function UploadPage() {
 
     setIsProcessing(true);
     setProgress(0);
+    setProcessingStep("Preparing files...");
 
     try {
       let allText = "";
+      let processedFrames = 0;
+      let totalFramesToProcess = 0;
 
-      // Process each image with Tesseract.js
-      for (let i = 0; i < files.length; i++) {
+      // First, prepare all frames (extract from videos)
+      const framesToProcess: string[] = [];
+
+      for (const file of files) {
+        if (isVideoFile(file)) {
+          setProcessingStep(`Extracting frames from ${file.name}...`);
+          const frames = await extractFramesFromVideo(file);
+          framesToProcess.push(...frames);
+        } else if (isImageFile(file)) {
+          // Convert image file to data URL
+          const dataUrl = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target?.result as string);
+            reader.readAsDataURL(file);
+          });
+          framesToProcess.push(dataUrl);
+        }
+      }
+
+      totalFramesToProcess = framesToProcess.length;
+      setProcessingStep(`Processing ${totalFramesToProcess} frames with OCR...`);
+
+      // Process each frame with Tesseract.js
+      for (let i = 0; i < framesToProcess.length; i++) {
         const worker = await createWorker("eng", undefined, {
           logger: (m) => {
             if (m.status === "recognizing text") {
-              const fileProgress = ((i + m.progress) / files.length) * 100;
-              setProgress(Math.round(fileProgress));
+              const overallProgress =
+                50 + ((processedFrames + m.progress) / totalFramesToProcess) * 50;
+              setProgress(Math.round(overallProgress));
             }
           },
         });
 
-        const { data } = await worker.recognize(files[i]);
-
-        allText += data.text + "\n\n---\n\n";
+        const { data } = await worker.recognize(framesToProcess[i]);
+        allText += data.text + "\n\n---FRAME---\n\n";
         await worker.terminate();
+
+        processedFrames++;
+        setProgress(Math.round(50 + (processedFrames / totalFramesToProcess) * 50));
       }
+
+      setProcessingStep("Analyzing data...");
 
       // Parse the OCR text into structured data
       const parsed = parseESPNData(allText);
@@ -96,19 +192,21 @@ export default function UploadPage() {
 
       // Store in localStorage for the analysis page
       localStorage.setItem("leagueData", JSON.stringify(parsed));
+
+      setProcessingStep("Complete!");
     } catch (error) {
-      console.error("Error processing images:", error);
-      alert("Error processing images. Please try again.");
+      console.error("Error processing files:", error);
+      alert("Error processing files. Please try again.");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // TODO: Improve this parsing logic based on actual ESPN screenshot format
+  // TODO: Improve this parsing logic based on actual ESPN format
   const parseESPNData = (text: string): ParsedData => {
     const lines = text.split("\n").filter((line) => line.trim());
 
-    // Detect scoring format (best-effort)
+    // Detect scoring format
     let scoringFormat = "Standard";
     if (text.toLowerCase().includes("ppr")) {
       if (text.toLowerCase().includes("half")) {
@@ -118,24 +216,27 @@ export default function UploadPage() {
       }
     }
 
-    // Detect league size (best-effort)
+    // Detect league size
     const leagueSizeMatch = text.match(/(\d+)\s*team/i);
-    const leagueSize = leagueSizeMatch ? parseInt(leagueSizeMatch[1]) : undefined;
+    const leagueSize = leagueSizeMatch
+      ? parseInt(leagueSizeMatch[1])
+      : undefined;
 
-    // Parse roster and available players (placeholder logic)
-    // TODO: Improve based on actual ESPN format
+    // Parse roster and available players
     const roster: ParsedData["roster"] = [];
     const availablePlayers: ParsedData["availablePlayers"] = [];
 
-    // Simple pattern matching for player names (this is a placeholder)
-    const playerPattern = /([A-Z][a-z]+\s+[A-Z][a-z]+)\s+(QB|RB|WR|TE|K|DEF)\s+([A-Z]{2,4})?/g;
+    // Enhanced pattern matching for player names with projections
+    const playerPattern =
+      /([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)\s+(QB|RB|WR|TE|K|DEF|DST)\s+([A-Z]{2,4})?(?:\s+(\d+\.?\d*))?/g;
     let match;
 
     while ((match = playerPattern.exec(text)) !== null) {
       const player = {
-        name: match[1],
+        name: match[1].trim(),
         position: match[2],
         team: match[3],
+        projectedPoints: match[4] ? parseFloat(match[4]) : undefined,
       };
 
       // Simple heuristic: first players are roster, rest are available
@@ -161,18 +262,29 @@ export default function UploadPage() {
     }
   };
 
+  const fileIcons: Record<string, string> = {
+    video: "🎥",
+    image: "📸",
+  };
+
   return (
-    <main className="min-h-screen py-12">
+    <main className="min-h-screen py-12 bg-gradient-to-b from-gray-50 to-white">
       <div className="container mx-auto px-6">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              Upload League Screenshots
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-full mb-6">
+              <span className="text-2xl">📱</span>
+              <span className="text-sm font-semibold text-blue-900">
+                iPhone Screen Recordings Supported
+              </span>
+            </div>
+            <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4">
+              Upload Your League Data
             </h1>
-            <p className="text-lg text-gray-600">
-              Upload screenshots from ESPN showing your league settings, roster, and
-              available players.
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Record your ESPN app walkthrough or upload screenshots. We&apos;ll extract
+              everything automatically.
             </p>
           </div>
 
@@ -182,62 +294,73 @@ export default function UploadPage() {
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
-              className={`relative border-2 border-dashed rounded-2xl p-12 text-center transition-all duration-200 ${
+              className={`relative border-2 border-dashed rounded-3xl p-12 text-center transition-all duration-200 ${
                 isDragging
-                  ? "border-blue-600 bg-blue-50"
-                  : "border-gray-300 bg-white hover:border-gray-400"
+                  ? "border-blue-600 bg-blue-50 scale-105"
+                  : "border-gray-300 bg-white hover:border-gray-400 hover:shadow-xl"
               }`}
             >
               <input
                 type="file"
                 multiple
-                accept="image/*"
+                accept="image/*,video/*"
                 onChange={handleFileInput}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 disabled={isProcessing}
               />
 
               <div className="pointer-events-none">
-                <svg
-                  className="mx-auto h-16 w-16 text-gray-400 mb-4"
-                  stroke="currentColor"
-                  fill="none"
-                  viewBox="0 0 48 48"
-                >
-                  <path
-                    d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                    strokeWidth={2}
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <p className="text-lg font-medium text-gray-900 mb-2">
-                  Drag and drop your screenshots here
+                <div className="text-7xl mb-6">🎬</div>
+                <p className="text-2xl font-bold text-gray-900 mb-3">
+                  Drop your files here
                 </p>
-                <p className="text-sm text-gray-500">or click to browse</p>
-                <p className="text-xs text-gray-400 mt-2">PNG, JPG up to 10MB each</p>
+                <p className="text-lg text-gray-600 mb-2">or click to browse</p>
+                <div className="flex items-center justify-center gap-4 mt-6">
+                  <div className="flex items-center gap-2 px-4 py-2 bg-blue-100 rounded-xl">
+                    <span className="text-2xl">🎥</span>
+                    <span className="text-sm font-medium text-blue-900">
+                      Videos (.mov, .mp4)
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 px-4 py-2 bg-purple-100 rounded-xl">
+                    <span className="text-2xl">📸</span>
+                    <span className="text-sm font-medium text-purple-900">
+                      Images (.png, .jpg)
+                    </span>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
           {/* File List */}
           {files.length > 0 && !parsedData && (
-            <div className="mt-8 bg-white rounded-2xl p-6 shadow-sm">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="mt-8 bg-white rounded-3xl p-8 shadow-xl">
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">
                 Uploaded Files ({files.length})
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {files.map((file, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-xl"
+                    className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl hover:shadow-md transition-shadow"
                   >
-                    <span className="text-sm text-gray-700 truncate flex-1">
-                      {file.name}
-                    </span>
+                    <div className="flex items-center gap-3 flex-1">
+                      <span className="text-3xl">
+                        {isVideoFile(file) ? fileIcons.video : fileIcons.image}
+                      </span>
+                      <div>
+                        <span className="text-sm font-medium text-gray-900 truncate block max-w-md">
+                          {file.name}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </span>
+                      </div>
+                    </div>
                     <button
                       onClick={() => removeFile(index)}
-                      className="ml-4 text-red-600 hover:text-red-800 text-sm font-medium"
+                      className="ml-4 px-4 py-2 text-red-600 hover:bg-red-50 rounded-xl text-sm font-semibold transition-colors"
                       disabled={isProcessing}
                     >
                       Remove
@@ -249,9 +372,9 @@ export default function UploadPage() {
               {!isProcessing && (
                 <button
                   onClick={processImages}
-                  className="mt-6 w-full bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors duration-200"
+                  className="mt-8 w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-2xl font-bold text-lg hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
                 >
-                  Process Images
+                  Process Files →
                 </button>
               )}
             </div>
@@ -259,87 +382,86 @@ export default function UploadPage() {
 
           {/* Processing Indicator */}
           {isProcessing && (
-            <div className="mt-8 bg-white rounded-2xl p-8 shadow-sm">
+            <div className="mt-8 bg-white rounded-3xl p-10 shadow-2xl">
               <div className="text-center">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-                  <svg
-                    className="animate-spin h-8 w-8 text-blue-600"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 rounded-3xl mb-6 animate-pulse">
+                  <span className="text-4xl">🤖</span>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Processing Screenshots...
+                <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                  {processingStep}
                 </h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  Extracting text from images
+                <p className="text-gray-600 mb-6">
+                  This may take a minute for videos...
                 </p>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-gray-200 rounded-full h-4 mb-2 overflow-hidden">
                   <div
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    className="bg-gradient-to-r from-blue-600 to-purple-600 h-4 rounded-full transition-all duration-300"
                     style={{ width: `${progress}%` }}
                   ></div>
                 </div>
-                <p className="text-sm text-gray-500 mt-2">{progress}%</p>
+                <p className="text-sm font-semibold text-gray-700">
+                  {progress}% complete
+                </p>
               </div>
             </div>
           )}
 
           {/* Parsed Data Review */}
           {parsedData && !isProcessing && (
-            <div className="mt-8 bg-white rounded-2xl p-8 shadow-sm">
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">
-                Review Your Data
-              </h3>
+            <div className="mt-8 bg-white rounded-3xl p-8 shadow-2xl">
+              <div className="flex items-center gap-3 mb-8">
+                <span className="text-4xl">✅</span>
+                <h3 className="text-3xl font-bold text-gray-900">
+                  Data Extracted Successfully!
+                </h3>
+              </div>
 
               <div className="space-y-6">
                 {/* League Settings */}
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6">
+                  <h4 className="text-lg font-bold text-gray-900 mb-4">
                     League Settings
                   </h4>
-                  <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-                    <p className="text-sm">
-                      <span className="font-medium">Scoring Format:</span>{" "}
-                      {parsedData.scoringFormat || "Unknown"}
-                    </p>
-                    <p className="text-sm">
-                      <span className="font-medium">League Size:</span>{" "}
-                      {parsedData.leagueSize
-                        ? `${parsedData.leagueSize} teams`
-                        : "Unknown"}
-                    </p>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white rounded-xl p-4">
+                      <p className="text-sm text-gray-600 mb-1">
+                        Scoring Format
+                      </p>
+                      <p className="text-xl font-bold text-gray-900">
+                        {parsedData.scoringFormat || "Unknown"}
+                      </p>
+                    </div>
+                    <div className="bg-white rounded-xl p-4">
+                      <p className="text-sm text-gray-600 mb-1">League Size</p>
+                      <p className="text-xl font-bold text-gray-900">
+                        {parsedData.leagueSize
+                          ? `${parsedData.leagueSize} teams`
+                          : "Unknown"}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
                 {/* Roster */}
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">
+                <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-2xl p-6">
+                  <h4 className="text-lg font-bold text-gray-900 mb-4">
                     Your Roster ({parsedData.roster.length} players)
                   </h4>
-                  <div className="bg-gray-50 rounded-xl p-4 max-h-64 overflow-y-auto">
+                  <div className="bg-white rounded-xl p-4 max-h-64 overflow-y-auto">
                     {parsedData.roster.length > 0 ? (
                       <div className="space-y-2">
                         {parsedData.roster.map((player, i) => (
-                          <div key={i} className="text-sm">
-                            <span className="font-medium">{player.name}</span> -{" "}
-                            {player.position}
-                            {player.team && ` (${player.team})`}
+                          <div
+                            key={i}
+                            className="flex items-center justify-between text-sm py-2 border-b border-gray-100 last:border-0"
+                          >
+                            <span className="font-semibold">{player.name}</span>
+                            <span className="text-gray-600">
+                              {player.position}
+                              {player.team && ` • ${player.team}`}
+                              {player.projectedPoints &&
+                                ` • ${player.projectedPoints} pts`}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -350,22 +472,32 @@ export default function UploadPage() {
                 </div>
 
                 {/* Available Players */}
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">
-                    Available Players ({parsedData.availablePlayers.length} players)
+                <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-2xl p-6">
+                  <h4 className="text-lg font-bold text-gray-900 mb-4">
+                    Available Players ({parsedData.availablePlayers.length}{" "}
+                    players)
                   </h4>
-                  <div className="bg-gray-50 rounded-xl p-4 max-h-64 overflow-y-auto">
+                  <div className="bg-white rounded-xl p-4 max-h-64 overflow-y-auto">
                     {parsedData.availablePlayers.length > 0 ? (
                       <div className="space-y-2">
-                        {parsedData.availablePlayers.slice(0, 10).map((player, i) => (
-                          <div key={i} className="text-sm">
-                            <span className="font-medium">{player.name}</span> -{" "}
-                            {player.position}
-                            {player.team && ` (${player.team})`}
-                          </div>
-                        ))}
+                        {parsedData.availablePlayers
+                          .slice(0, 10)
+                          .map((player, i) => (
+                            <div
+                              key={i}
+                              className="flex items-center justify-between text-sm py-2 border-b border-gray-100 last:border-0"
+                            >
+                              <span className="font-semibold">
+                                {player.name}
+                              </span>
+                              <span className="text-gray-600">
+                                {player.position}
+                                {player.team && ` • ${player.team}`}
+                              </span>
+                            </div>
+                          ))}
                         {parsedData.availablePlayers.length > 10 && (
-                          <p className="text-sm text-gray-500 italic">
+                          <p className="text-sm text-gray-500 italic text-center pt-2">
                             ...and {parsedData.availablePlayers.length - 10} more
                           </p>
                         )}
@@ -375,16 +507,6 @@ export default function UploadPage() {
                     )}
                   </div>
                 </div>
-
-                {/* Raw JSON Preview */}
-                <details className="bg-gray-50 rounded-xl p-4">
-                  <summary className="font-medium text-gray-900 cursor-pointer">
-                    View Raw JSON
-                  </summary>
-                  <pre className="mt-4 text-xs bg-white p-4 rounded-lg overflow-x-auto">
-                    {JSON.stringify(parsedData, null, 2)}
-                  </pre>
-                </details>
               </div>
 
               {/* Action Buttons */}
@@ -394,15 +516,15 @@ export default function UploadPage() {
                     setParsedData(null);
                     setFiles([]);
                   }}
-                  className="flex-1 border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:border-gray-400 transition-colors duration-200"
+                  className="flex-1 border-2 border-gray-300 text-gray-700 py-4 px-6 rounded-2xl font-bold hover:border-gray-400 hover:shadow-lg transition-all duration-200"
                 >
-                  Start Over
+                  ← Start Over
                 </button>
                 <button
                   onClick={handleConfirm}
-                  className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors duration-200"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-6 rounded-2xl font-bold hover:shadow-2xl transform hover:scale-105 transition-all duration-300"
                 >
-                  Continue to Analysis
+                  Continue to Analysis →
                 </button>
               </div>
             </div>
