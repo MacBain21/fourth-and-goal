@@ -36,10 +36,10 @@ export default function AnalysisPage() {
 
   if (!data) {
     return (
-      <main className="min-h-screen py-12">
+      <main className="min-h-screen py-12 bg-gradient-to-br from-[#000918] via-[#051639] to-[#020712]">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="bg-white rounded-2xl p-12 shadow-sm">
+            <div className="bg-white rounded-3xl p-12 shadow-2xl">
               <svg
                 className="mx-auto h-16 w-16 text-gray-400 mb-4"
                 fill="none"
@@ -53,7 +53,7 @@ export default function AnalysisPage() {
                   d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                 />
               </svg>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold text-[#0B1E3D] mb-2">
                 No Data Available
               </h2>
               <p className="text-gray-600 mb-6">
@@ -61,7 +61,7 @@ export default function AnalysisPage() {
               </p>
               <Link
                 href="/upload"
-                className="inline-block bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors duration-200"
+                className="inline-block bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] text-[#0B1E3D] py-3 px-6 rounded-xl font-bold hover:shadow-2xl hover:shadow-[#26D36B]/30 transform hover:scale-105 transition-all duration-200"
               >
                 Upload Screenshots
               </Link>
@@ -79,34 +79,34 @@ export default function AnalysisPage() {
   }, {} as Record<string, number>);
 
   return (
-    <main className="min-h-screen py-12">
+    <main className="min-h-screen py-12 bg-gradient-to-br from-[#000918] via-[#051639] to-[#020712]">
       <div className="container mx-auto px-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2">
               League Analysis
             </h1>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-white/80">
               AI-powered insights for your fantasy football team
             </p>
           </div>
 
           {/* League Settings Card */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">
+          <div className="bg-white rounded-3xl p-6 shadow-2xl mb-6">
+            <h2 className="text-xl font-bold text-[#0B1E3D] mb-4">
               League Settings
             </h2>
             <div className="grid md:grid-cols-2 gap-4">
-              <div className="bg-gray-50 rounded-xl p-4">
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
                 <p className="text-sm text-gray-600 mb-1">Scoring Format</p>
-                <p className="text-lg font-semibold text-gray-900">
+                <p className="text-lg font-semibold text-[#0B1E3D]">
                   {data.scoringFormat || "Unknown"}
                 </p>
               </div>
-              <div className="bg-gray-50 rounded-xl p-4">
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 border border-gray-200">
                 <p className="text-sm text-gray-600 mb-1">League Size</p>
-                <p className="text-lg font-semibold text-gray-900">
+                <p className="text-lg font-semibold text-[#0B1E3D]">
                   {data.leagueSize ? `${data.leagueSize} Teams` : "Unknown"}
                 </p>
               </div>
@@ -114,19 +114,19 @@ export default function AnalysisPage() {
           </div>
 
           {/* Current Roster Card */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Your Roster</h2>
+          <div className="bg-white rounded-3xl p-6 shadow-2xl mb-6">
+            <h2 className="text-xl font-bold text-[#0B1E3D] mb-4">Your Roster</h2>
 
             {/* Position Breakdown */}
             <div className="mb-6">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              <h3 className="text-sm font-semibold text-[#0B1E3D] mb-3">
                 Position Breakdown
               </h3>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {Object.entries(rosterByPosition).map(([position, count]) => (
-                  <div key={position} className="bg-blue-50 rounded-xl p-3 text-center">
-                    <p className="text-2xl font-bold text-blue-600">{count}</p>
-                    <p className="text-xs font-medium text-gray-600">{position}</p>
+                  <div key={position} className="bg-gradient-to-br from-[#1A8CFF]/10 to-[#1A8CFF]/20 border border-[#1A8CFF]/30 rounded-xl p-3 text-center">
+                    <p className="text-2xl font-bold text-[#1A8CFF]">{count}</p>
+                    <p className="text-xs font-medium text-gray-700">{position}</p>
                   </div>
                 ))}
               </div>
@@ -134,7 +134,7 @@ export default function AnalysisPage() {
 
             {/* Player List */}
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">
+              <h3 className="text-sm font-semibold text-[#0B1E3D] mb-3">
                 All Players ({data.roster.length})
               </h3>
               <div className="overflow-x-auto">
@@ -175,7 +175,7 @@ export default function AnalysisPage() {
           {/* AI Insights Section - Placeholder */}
           <div className="grid md:grid-cols-3 gap-6 mb-6">
             {/* Roster Strengths & Weaknesses */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <div className="bg-white rounded-3xl p-6 shadow-2xl">
               <div className="flex items-center mb-4">
                 <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center mr-3">
                   <svg
@@ -192,12 +192,12 @@ export default function AnalysisPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-lg font-bold text-[#0B1E3D]">
                   Roster Analysis
                 </h3>
               </div>
               <div className="space-y-3">
-                <div className="bg-green-50 rounded-xl p-3">
+                <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-3">
                   <p className="text-xs font-semibold text-green-700 mb-1">
                     STRENGTHS
                   </p>
@@ -209,7 +209,7 @@ export default function AnalysisPage() {
                       : "Balanced roster composition"}
                   </p>
                 </div>
-                <div className="bg-amber-50 rounded-xl p-3">
+                <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-xl p-3">
                   <p className="text-xs font-semibold text-amber-700 mb-1">
                     NEEDS ATTENTION
                   </p>
@@ -228,7 +228,7 @@ export default function AnalysisPage() {
             </div>
 
             {/* Start/Sit Recommendations */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <div className="bg-white rounded-3xl p-6 shadow-2xl">
               <div className="flex items-center mb-4">
                 <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center mr-3">
                   <svg
@@ -245,13 +245,13 @@ export default function AnalysisPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-lg font-bold text-[#0B1E3D]">
                   Start/Sit
                 </h3>
               </div>
               <div className="space-y-3">
-                <div className="bg-blue-50 rounded-xl p-3">
-                  <p className="text-xs font-semibold text-blue-700 mb-1">
+                <div className="bg-gradient-to-br from-[#1A8CFF]/10 to-[#1A8CFF]/20 border border-[#1A8CFF]/30 rounded-xl p-3">
+                  <p className="text-xs font-semibold text-[#1A8CFF] mb-1">
                     RECOMMENDED STARTS
                   </p>
                   <p className="text-sm text-gray-700">
@@ -259,7 +259,7 @@ export default function AnalysisPage() {
                       "Players TBD"}
                   </p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-3">
+                <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-3">
                   <p className="text-xs font-semibold text-gray-700 mb-1">
                     CONSIDER BENCHING
                   </p>
@@ -274,7 +274,7 @@ export default function AnalysisPage() {
             </div>
 
             {/* Waiver Targets */}
-            <div className="bg-white rounded-2xl p-6 shadow-sm">
+            <div className="bg-white rounded-3xl p-6 shadow-2xl">
               <div className="flex items-center mb-4">
                 <div className="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center mr-3">
                   <svg
@@ -291,14 +291,14 @@ export default function AnalysisPage() {
                     />
                   </svg>
                 </div>
-                <h3 className="text-lg font-bold text-gray-900">
+                <h3 className="text-lg font-bold text-[#0B1E3D]">
                   Waiver Targets
                 </h3>
               </div>
               <div className="space-y-3">
                 {data.availablePlayers.slice(0, 3).map((player, i) => (
-                  <div key={i} className="bg-purple-50 rounded-xl p-3">
-                    <p className="text-sm font-semibold text-gray-900">
+                  <div key={i} className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-3">
+                    <p className="text-sm font-semibold text-[#0B1E3D]">
                       {player.name}
                     </p>
                     <p className="text-xs text-gray-600">
@@ -307,7 +307,7 @@ export default function AnalysisPage() {
                   </div>
                 ))}
                 {data.availablePlayers.length === 0 && (
-                  <div className="bg-gray-50 rounded-xl p-3">
+                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-3">
                     <p className="text-sm text-gray-600">
                       Upload screenshots with available players to see recommendations
                     </p>
@@ -321,10 +321,10 @@ export default function AnalysisPage() {
           </div>
 
           {/* TODO: Wire to API Route */}
-          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
+          <div className="bg-gradient-to-br from-[#1A8CFF]/10 to-[#1A8CFF]/20 border-2 border-[#1A8CFF]/30 rounded-3xl p-6">
             <div className="flex items-start">
               <svg
-                className="w-6 h-6 text-blue-600 mt-0.5 mr-3 flex-shrink-0"
+                className="w-6 h-6 text-[#1A8CFF] mt-0.5 mr-3 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -337,10 +337,10 @@ export default function AnalysisPage() {
                 />
               </svg>
               <div>
-                <h3 className="text-sm font-semibold text-blue-900 mb-1">
+                <h3 className="text-sm font-semibold text-[#1A8CFF] mb-1">
                   Development Note
                 </h3>
-                <p className="text-sm text-blue-800">
+                <p className="text-sm text-gray-700">
                   The current insights are placeholder data based on your parsed roster.
                   In the next phase, this page will call an API route that sends your
                   league data to an AI service (like OpenAI or Anthropic) to generate
@@ -355,7 +355,7 @@ export default function AnalysisPage() {
           <div className="flex gap-4 mt-8">
             <Link
               href="/upload"
-              className="flex-1 border-2 border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:border-gray-400 transition-colors duration-200 text-center"
+              className="flex-1 border-2 border-white/30 text-white py-3 px-6 rounded-2xl font-bold hover:bg-white/10 hover:border-white/50 transition-all duration-200 text-center"
             >
               Upload New Data
             </Link>
@@ -364,7 +364,7 @@ export default function AnalysisPage() {
                 // TODO: Trigger AI analysis
                 alert("AI analysis API integration coming soon!");
               }}
-              className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors duration-200"
+              className="flex-1 bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] text-[#0B1E3D] py-3 px-6 rounded-2xl font-bold hover:shadow-2xl hover:shadow-[#26D36B]/30 transform hover:scale-105 transition-all duration-200"
             >
               Refresh AI Analysis
             </button>

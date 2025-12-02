@@ -9,64 +9,64 @@ export default function Navigation() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
+    <nav className="bg-[#0B1E3D]/80 backdrop-blur-xl border-b border-white/10 sticky top-0 z-50">
       <div className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 group">
-            <div className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent">
+            <div className="text-2xl font-bold bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] bg-clip-text text-transparent hover:scale-105 transition-transform duration-200">
               Fourth & Goal
             </div>
           </Link>
 
           {/* Navigation Links */}
-          <div className="flex items-center space-x-6">
+          <div className="flex items-center space-x-2">
             <Link
               href="/"
-              className={`text-sm font-medium transition-colors duration-200 ${
+              className={`relative px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${
                 isActive("/")
-                  ? "text-blue-600"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "text-[#0B1E3D] bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] shadow-lg shadow-[#26D36B]/30"
+                  : "text-white/80 hover:text-white hover:bg-white/10"
               }`}
             >
               Home
             </Link>
             <Link
               href="/upload"
-              className={`text-sm font-medium transition-colors duration-200 ${
+              className={`relative px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${
                 isActive("/upload")
-                  ? "text-blue-600"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "text-[#0B1E3D] bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] shadow-lg shadow-[#26D36B]/30"
+                  : "text-white/80 hover:text-white hover:bg-white/10"
               }`}
             >
               Upload
             </Link>
             <Link
               href="/analysis"
-              className={`text-sm font-medium transition-colors duration-200 ${
+              className={`relative px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${
                 isActive("/analysis")
-                  ? "text-blue-600"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "text-[#0B1E3D] bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] shadow-lg shadow-[#26D36B]/30"
+                  : "text-white/80 hover:text-white hover:bg-white/10"
               }`}
             >
               Overview
             </Link>
             <Link
               href="/lineup"
-              className={`text-sm font-medium transition-colors duration-200 ${
+              className={`relative px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${
                 isActive("/lineup")
-                  ? "text-blue-600"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "text-[#0B1E3D] bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] shadow-lg shadow-[#26D36B]/30"
+                  : "text-white/80 hover:text-white hover:bg-white/10"
               }`}
             >
               Lineup
             </Link>
             <Link
               href="/waiver"
-              className={`text-sm font-medium transition-colors duration-200 ${
+              className={`relative px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${
                 isActive("/waiver")
-                  ? "text-blue-600"
-                  : "text-gray-600 hover:text-gray-900"
+                  ? "text-[#0B1E3D] bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] shadow-lg shadow-[#26D36B]/30"
+                  : "text-white/80 hover:text-white hover:bg-white/10"
               }`}
             >
               Waiver Wire

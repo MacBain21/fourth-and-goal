@@ -32,10 +32,10 @@ export default function WaiverPage() {
 
   if (!data) {
     return (
-      <main className="min-h-screen py-12">
+      <main className="min-h-screen py-12 bg-gradient-to-br from-[#000918] via-[#051639] to-[#020712]">
         <div className="container mx-auto px-6">
           <div className="max-w-4xl mx-auto text-center">
-            <div className="bg-white rounded-2xl p-12 shadow-sm">
+            <div className="bg-white rounded-3xl p-12 shadow-2xl">
               <svg
                 className="mx-auto h-16 w-16 text-gray-400 mb-4"
                 fill="none"
@@ -49,7 +49,7 @@ export default function WaiverPage() {
                   d="M13 10V3L4 14h7v7l9-11h-7z"
                 />
               </svg>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+              <h2 className="text-2xl font-bold text-[#0B1E3D] mb-2">
                 No Data Available
               </h2>
               <p className="text-gray-600 mb-6">
@@ -57,7 +57,7 @@ export default function WaiverPage() {
               </p>
               <Link
                 href="/upload"
-                className="inline-block bg-blue-600 text-white py-3 px-6 rounded-xl font-semibold hover:bg-blue-700 transition-colors duration-200"
+                className="inline-block bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] text-[#0B1E3D] py-3 px-6 rounded-xl font-bold hover:shadow-2xl hover:shadow-[#26D36B]/30 transform hover:scale-105 transition-all duration-200"
               >
                 Upload Screenshots
               </Link>
@@ -93,11 +93,11 @@ export default function WaiverPage() {
   const getPriorityColor = (priority: "high" | "medium" | "low") => {
     switch (priority) {
       case "high":
-        return "bg-red-100 text-red-700 border-red-300";
+        return "bg-gradient-to-br from-red-50 to-red-100 text-red-700 border-red-300";
       case "medium":
-        return "bg-yellow-100 text-yellow-700 border-yellow-300";
+        return "bg-gradient-to-br from-yellow-50 to-yellow-100 text-yellow-700 border-yellow-300";
       case "low":
-        return "bg-green-100 text-green-700 border-green-300";
+        return "bg-gradient-to-br from-green-50 to-green-100 text-green-700 border-green-300";
     }
   };
 
@@ -113,25 +113,25 @@ export default function WaiverPage() {
   };
 
   return (
-    <main className="min-h-screen py-12">
+    <main className="min-h-screen py-12 bg-gradient-to-br from-[#000918] via-[#051639] to-[#020712]">
       <div className="container mx-auto px-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
+            <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2">
               Waiver Wire
             </h1>
-            <p className="text-lg text-gray-600">
+            <p className="text-lg text-white/80">
               AI-recommended pickups based on your roster needs
             </p>
           </div>
 
           {/* Filters */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm mb-6">
+          <div className="bg-white rounded-3xl p-6 shadow-2xl mb-6">
             <div className="grid md:grid-cols-2 gap-6">
               {/* Position Filter */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                <h3 className="text-sm font-semibold text-[#0B1E3D] mb-3">
                   Filter by Position
                 </h3>
                 <div className="flex flex-wrap gap-2">
@@ -139,9 +139,9 @@ export default function WaiverPage() {
                     <button
                       key={pos}
                       onClick={() => setSelectedPosition(pos)}
-                      className={`px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 ${
+                      className={`px-4 py-2 rounded-xl font-bold text-sm transition-all duration-300 ${
                         selectedPosition === pos
-                          ? "bg-blue-600 text-white shadow-md"
+                          ? "bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] text-[#0B1E3D] shadow-lg shadow-[#26D36B]/30 scale-105"
                           : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                       }`}
                     >
@@ -155,15 +155,15 @@ export default function WaiverPage() {
 
               {/* Sort Options */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                <h3 className="text-sm font-semibold text-[#0B1E3D] mb-3">
                   Sort By
                 </h3>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setSortBy("priority")}
-                    className={`flex-1 px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 ${
+                    className={`flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-all duration-300 ${
                       sortBy === "priority"
-                        ? "bg-blue-600 text-white shadow-md"
+                        ? "bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] text-[#0B1E3D] shadow-lg shadow-[#26D36B]/30"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
@@ -171,9 +171,9 @@ export default function WaiverPage() {
                   </button>
                   <button
                     onClick={() => setSortBy("position")}
-                    className={`flex-1 px-4 py-2 rounded-xl font-medium text-sm transition-all duration-200 ${
+                    className={`flex-1 px-4 py-2 rounded-xl font-bold text-sm transition-all duration-300 ${
                       sortBy === "position"
-                        ? "bg-blue-600 text-white shadow-md"
+                        ? "bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] text-[#0B1E3D] shadow-lg shadow-[#26D36B]/30"
                         : "bg-gray-100 text-gray-700 hover:bg-gray-200"
                     }`}
                   >
@@ -192,14 +192,14 @@ export default function WaiverPage() {
                 return (
                   <div
                     key={index}
-                    className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-200 border-2 border-gray-100 hover:border-blue-200"
+                    className="bg-white rounded-3xl p-6 shadow-2xl hover:shadow-[0_25px_50px_rgba(26,140,255,0.3)] transition-all duration-300 border-2 border-gray-100 hover:border-[#1A8CFF]"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-start gap-4">
                           {/* Rank Badge */}
-                          <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <span className="text-xl font-bold text-gray-700">
+                          <div className="w-12 h-12 bg-gradient-to-br from-[#1A8CFF] to-purple-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
+                            <span className="text-xl font-bold text-white">
                               #{index + 1}
                             </span>
                           </div>
@@ -207,11 +207,11 @@ export default function WaiverPage() {
                           {/* Player Info */}
                           <div className="flex-1">
                             <div className="flex items-center gap-3 mb-2">
-                              <h3 className="text-xl font-bold text-gray-900">
+                              <h3 className="text-xl font-bold text-[#0B1E3D]">
                                 {player.name}
                               </h3>
                               <span
-                                className={`px-3 py-1 rounded-lg text-xs font-semibold border ${getPriorityColor(
+                                className={`px-3 py-1 rounded-lg text-xs font-bold border ${getPriorityColor(
                                   priority
                                 )}`}
                               >
@@ -227,9 +227,9 @@ export default function WaiverPage() {
                             </div>
 
                             {/* AI Insight Placeholder */}
-                            <div className="bg-blue-50 rounded-xl p-3 border border-blue-200">
+                            <div className="bg-gradient-to-br from-[#1A8CFF]/10 to-[#1A8CFF]/20 rounded-xl p-3 border border-[#1A8CFF]/30">
                               <p className="text-sm text-gray-700">
-                                <span className="font-semibold text-blue-900">
+                                <span className="font-semibold text-[#1A8CFF]">
                                   Why add this player:
                                 </span>{" "}
                                 {priority === "high" &&
@@ -249,7 +249,7 @@ export default function WaiverPage() {
 
                       {/* Action Button */}
                       <div className="ml-4">
-                        <button className="px-6 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors duration-200 shadow-md hover:shadow-lg">
+                        <button className="px-6 py-3 bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] text-[#0B1E3D] rounded-xl font-bold hover:shadow-2xl hover:shadow-[#26D36B]/30 transform hover:scale-105 transition-all duration-200">
                           Add to Watch List
                         </button>
                       </div>
@@ -258,7 +258,7 @@ export default function WaiverPage() {
                 );
               })
             ) : (
-              <div className="bg-white rounded-2xl p-12 shadow-sm text-center">
+              <div className="bg-white rounded-3xl p-12 shadow-2xl text-center">
                 <p className="text-gray-600">
                   No available players found. Upload screenshots with waiver wire
                   data to see recommendations.
@@ -268,9 +268,9 @@ export default function WaiverPage() {
           </div>
 
           {/* Roster Needs Analysis */}
-          <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-8 shadow-sm border border-purple-200">
+          <div className="bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-2 border-purple-500/30 rounded-3xl p-8 shadow-2xl">
             <div className="flex items-start">
-              <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center mr-4 flex-shrink-0">
+              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center mr-4 flex-shrink-0 shadow-lg">
                 <svg
                   className="w-6 h-6 text-white"
                   fill="none"
@@ -286,31 +286,31 @@ export default function WaiverPage() {
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                <h3 className="text-xl font-bold text-purple-600 mb-2">
                   Roster Needs Analysis
                 </h3>
                 <p className="text-gray-700 mb-4">
                   Based on your current roster, here&apos;s where you could improve:
                 </p>
                 <div className="grid md:grid-cols-3 gap-4">
-                  <div className="bg-white rounded-xl p-4 shadow-sm">
-                    <h4 className="font-semibold text-gray-900 mb-1">
+                  <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-200">
+                    <h4 className="font-semibold text-[#0B1E3D] mb-1">
                       Top Priority
                     </h4>
                     <p className="text-sm text-gray-600">
                       Add RB depth for bye week coverage
                     </p>
                   </div>
-                  <div className="bg-white rounded-xl p-4 shadow-sm">
-                    <h4 className="font-semibold text-gray-900 mb-1">
+                  <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-200">
+                    <h4 className="font-semibold text-[#0B1E3D] mb-1">
                       Consider
                     </h4>
                     <p className="text-sm text-gray-600">
                       WR upside for playoff push
                     </p>
                   </div>
-                  <div className="bg-white rounded-xl p-4 shadow-sm">
-                    <h4 className="font-semibold text-gray-900 mb-1">
+                  <div className="bg-white rounded-xl p-4 shadow-lg border border-gray-200">
+                    <h4 className="font-semibold text-[#0B1E3D] mb-1">
                       Watch For
                     </h4>
                     <p className="text-sm text-gray-600">
