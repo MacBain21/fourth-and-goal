@@ -120,7 +120,7 @@ export default function Home() {
               Waiver Targets
             </h3>
             <p className="text-gray-600 leading-relaxed">
-              Discover high-value waiver wire pickups tailored to your league's
+              Discover high-value waiver wire pickups tailored to your league&apos;s
               scoring format.
             </p>
           </div>
