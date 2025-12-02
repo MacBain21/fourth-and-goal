@@ -20,7 +20,7 @@ export default function Navigation() {
           </Link>
 
           {/* Navigation Links */}
-          <div className="flex items-center space-x-8">
+          <div className="flex items-center space-x-6">
             <Link
               href="/"
               className={`text-sm font-medium transition-colors duration-200 ${
@@ -49,7 +49,27 @@ export default function Navigation() {
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              Analysis
+              Overview
+            </Link>
+            <Link
+              href="/lineup"
+              className={`text-sm font-medium transition-colors duration-200 ${
+                isActive("/lineup")
+                  ? "text-blue-600"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Lineup
+            </Link>
+            <Link
+              href="/waiver"
+              className={`text-sm font-medium transition-colors duration-200 ${
+                isActive("/waiver")
+                  ? "text-blue-600"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              Waiver Wire
             </Link>
           </div>
         </div>
