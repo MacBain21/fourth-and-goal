@@ -9,6 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "espn-fantasy-football-api": "^2.0.1",
     "next": "^15.0.3",
     "openai": "^6.9.1",
     "react": "^19.0.0",

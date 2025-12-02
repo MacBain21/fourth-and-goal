@@ -32,14 +32,14 @@ export default function Navigation() {
               Home
             </Link>
             <Link
-              href="/upload"
+              href="/connect"
               className={`relative px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${
-                isActive("/upload")
+                isActive("/connect")
                   ? "text-[#0B1E3D] bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] shadow-lg shadow-[#26D36B]/30"
                   : "text-white/80 hover:text-white hover:bg-white/10"
               }`}
             >
-              Upload
+              Connect ESPN
             </Link>
             <Link
               href="/analysis"
@@ -70,6 +70,16 @@ export default function Navigation() {
               }`}
             >
               Waiver Wire
+            </Link>
+            <Link
+              href="/compare"
+              className={`relative px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${
+                isActive("/compare")
+                  ? "text-[#0B1E3D] bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] shadow-lg shadow-[#26D36B]/30"
+                  : "text-white/80 hover:text-white hover:bg-white/10"
+              }`}
+            >
+              Compare
             </Link>
           </div>
         </div>
