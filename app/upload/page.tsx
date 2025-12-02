@@ -75,14 +75,16 @@ export default function UploadPage() {
 
       // Process each image with Tesseract.js
       for (let i = 0; i < files.length; i++) {
-        const worker = await createWorker("eng");
-
-        const { data } = await worker.recognize(files[i], {}, {
-          progress: (info) => {
-            const fileProgress = ((i + info.progress) / files.length) * 100;
-            setProgress(Math.round(fileProgress));
+        const worker = await createWorker("eng", undefined, {
+          logger: (m) => {
+            if (m.status === "recognizing text") {
+              const fileProgress = ((i + m.progress) / files.length) * 100;
+              setProgress(Math.round(fileProgress));
+            }
           },
         });
+
+        const { data } = await worker.recognize(files[i]);
 
         allText += data.text + "\n\n---\n\n";
         await worker.terminate();
