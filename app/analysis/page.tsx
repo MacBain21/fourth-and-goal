@@ -48,13 +48,96 @@ export default function AnalysisPage() {
     waiver: boolean;
   }>({ overview: false, lineup: false, waiver: false });
 
+  // Roster lineup state - organize players into starters and bench
+  const [lineup, setLineup] = useState<{
+    QB?: any;
+    RB1?: any;
+    RB2?: any;
+    WR1?: any;
+    WR2?: any;
+    TE?: any;
+    FLEX?: any;
+    DST?: any;
+    K?: any;
+    BE: any[];
+  }>({ BE: [] });
+
   useEffect(() => {
     // Load data from localStorage
     const storedData = localStorage.getItem("leagueData");
     if (storedData) {
-      setData(JSON.parse(storedData));
+      const parsedData = JSON.parse(storedData);
+      setData(parsedData);
+
+      // Auto-organize roster into lineup
+      if (parsedData.roster) {
+        organizeLineup(parsedData.roster);
+      }
     }
   }, []);
+
+  const organizeLineup = (roster: any[]) => {
+    const newLineup: any = { BE: [] };
+    const remaining = [...roster];
+
+    // Sort by projected points to put best players in starting slots
+    remaining.sort((a, b) => (b.projectedPoints || 0) - (a.projectedPoints || 0));
+
+    // Fill QB
+    const qbIndex = remaining.findIndex(p => p.position === 'QB');
+    if (qbIndex >= 0) {
+      newLineup.QB = remaining.splice(qbIndex, 1)[0];
+    }
+
+    // Fill RB1, RB2
+    const rb1Index = remaining.findIndex(p => p.position === 'RB');
+    if (rb1Index >= 0) {
+      newLineup.RB1 = remaining.splice(rb1Index, 1)[0];
+    }
+    const rb2Index = remaining.findIndex(p => p.position === 'RB');
+    if (rb2Index >= 0) {
+      newLineup.RB2 = remaining.splice(rb2Index, 1)[0];
+    }
+
+    // Fill WR1, WR2
+    const wr1Index = remaining.findIndex(p => p.position === 'WR');
+    if (wr1Index >= 0) {
+      newLineup.WR1 = remaining.splice(wr1Index, 1)[0];
+    }
+    const wr2Index = remaining.findIndex(p => p.position === 'WR');
+    if (wr2Index >= 0) {
+      newLineup.WR2 = remaining.splice(wr2Index, 1)[0];
+    }
+
+    // Fill TE
+    const teIndex = remaining.findIndex(p => p.position === 'TE');
+    if (teIndex >= 0) {
+      newLineup.TE = remaining.splice(teIndex, 1)[0];
+    }
+
+    // Fill FLEX (best remaining RB/WR/TE)
+    const flexIndex = remaining.findIndex(p => ['RB', 'WR', 'TE'].includes(p.position));
+    if (flexIndex >= 0) {
+      newLineup.FLEX = remaining.splice(flexIndex, 1)[0];
+    }
+
+    // Fill K
+    const kIndex = remaining.findIndex(p => p.position === 'K');
+    if (kIndex >= 0) {
+      newLineup.K = remaining.splice(kIndex, 1)[0];
+    }
+
+    // Fill D/ST
+    const dstIndex = remaining.findIndex(p => p.position === 'DEF');
+    if (dstIndex >= 0) {
+      newLineup.DST = remaining.splice(dstIndex, 1)[0];
+    }
+
+    // Rest go to bench
+    newLineup.BE = remaining;
+
+    setLineup(newLineup);
+  };
 
   const generateAIAnalysis = async (type: "overview" | "lineup" | "waiver") => {
     if (!data) return;
@@ -172,109 +255,281 @@ export default function AnalysisPage() {
             </div>
           </div>
 
-          {/* Current Roster Card */}
+          {/* ESPN-Style Roster Card */}
           <div className="bg-white rounded-3xl p-6 shadow-2xl mb-6">
-            <h2 className="text-xl font-bold text-[#0B1E3D] mb-4">Your Roster</h2>
+            <h2 className="text-xl font-bold text-[#0B1E3D] mb-6">Your Roster</h2>
 
-            {/* Position Breakdown */}
+            {/* Starters Section */}
             <div className="mb-6">
-              <h3 className="text-sm font-semibold text-[#0B1E3D] mb-3">
-                Position Breakdown
-              </h3>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {Object.entries(rosterByPosition).map(([position, count]) => (
-                  <div key={position} className="bg-gradient-to-br from-[#1A8CFF]/10 to-[#1A8CFF]/20 border border-[#1A8CFF]/30 rounded-xl p-3 text-center">
-                    <p className="text-2xl font-bold text-[#1A8CFF]">{count}</p>
-                    <p className="text-xs font-medium text-gray-700">{position}</p>
+              <div className="flex items-center justify-between mb-4 pb-2 border-b-2 border-gray-200">
+                <h3 className="text-sm font-bold text-[#0B1E3D] uppercase tracking-wide">
+                  Starters
+                </h3>
+                <span className="text-sm font-bold text-gray-600">SCORE</span>
+              </div>
+              <div className="space-y-2">
+                {/* QB */}
+                <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors" onClick={() => lineup.QB && setSelectedPlayer(lineup.QB)}>
+                  <div className="w-16 flex-shrink-0">
+                    <span className="px-3 py-1.5 bg-[#1A8CFF]/10 text-[#1A8CFF] rounded-full text-xs font-bold inline-block text-center min-w-[3rem]">
+                      QB
+                    </span>
                   </div>
-                ))}
+                  {lineup.QB ? (
+                    <>
+                      {lineup.QB.photoUrl && (
+                        <img
+                          src={lineup.QB.photoUrl}
+                          alt={lineup.QB.name}
+                          className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-gray-900 truncate">{lineup.QB.name}</div>
+                        <div className="text-xs text-gray-500">{lineup.QB.team}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-gray-900">{lineup.QB.projectedPoints?.toFixed(1) || "—"}</div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-gray-400 italic">Empty</div>
+                  )}
+                </div>
+
+                {/* RB1 */}
+                <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors" onClick={() => lineup.RB1 && setSelectedPlayer(lineup.RB1)}>
+                  <div className="w-16 flex-shrink-0">
+                    <span className="px-3 py-1.5 bg-[#1A8CFF]/10 text-[#1A8CFF] rounded-full text-xs font-bold inline-block text-center min-w-[3rem]">
+                      RB
+                    </span>
+                  </div>
+                  {lineup.RB1 ? (
+                    <>
+                      {lineup.RB1.photoUrl && (
+                        <img src={lineup.RB1.photoUrl} alt={lineup.RB1.name} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-gray-900 truncate">{lineup.RB1.name}</div>
+                        <div className="text-xs text-gray-500">{lineup.RB1.team}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-gray-900">{lineup.RB1.projectedPoints?.toFixed(1) || "—"}</div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-gray-400 italic">Empty</div>
+                  )}
+                </div>
+
+                {/* RB2 */}
+                <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors" onClick={() => lineup.RB2 && setSelectedPlayer(lineup.RB2)}>
+                  <div className="w-16 flex-shrink-0">
+                    <span className="px-3 py-1.5 bg-[#1A8CFF]/10 text-[#1A8CFF] rounded-full text-xs font-bold inline-block text-center min-w-[3rem]">
+                      RB
+                    </span>
+                  </div>
+                  {lineup.RB2 ? (
+                    <>
+                      {lineup.RB2.photoUrl && (
+                        <img src={lineup.RB2.photoUrl} alt={lineup.RB2.name} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-gray-900 truncate">{lineup.RB2.name}</div>
+                        <div className="text-xs text-gray-500">{lineup.RB2.team}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-gray-900">{lineup.RB2.projectedPoints?.toFixed(1) || "—"}</div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-gray-400 italic">Empty</div>
+                  )}
+                </div>
+
+                {/* WR1 */}
+                <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors" onClick={() => lineup.WR1 && setSelectedPlayer(lineup.WR1)}>
+                  <div className="w-16 flex-shrink-0">
+                    <span className="px-3 py-1.5 bg-[#1A8CFF]/10 text-[#1A8CFF] rounded-full text-xs font-bold inline-block text-center min-w-[3rem]">
+                      WR
+                    </span>
+                  </div>
+                  {lineup.WR1 ? (
+                    <>
+                      {lineup.WR1.photoUrl && (
+                        <img src={lineup.WR1.photoUrl} alt={lineup.WR1.name} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-gray-900 truncate">{lineup.WR1.name}</div>
+                        <div className="text-xs text-gray-500">{lineup.WR1.team}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-gray-900">{lineup.WR1.projectedPoints?.toFixed(1) || "—"}</div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-gray-400 italic">Empty</div>
+                  )}
+                </div>
+
+                {/* WR2 */}
+                <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors" onClick={() => lineup.WR2 && setSelectedPlayer(lineup.WR2)}>
+                  <div className="w-16 flex-shrink-0">
+                    <span className="px-3 py-1.5 bg-[#1A8CFF]/10 text-[#1A8CFF] rounded-full text-xs font-bold inline-block text-center min-w-[3rem]">
+                      WR
+                    </span>
+                  </div>
+                  {lineup.WR2 ? (
+                    <>
+                      {lineup.WR2.photoUrl && (
+                        <img src={lineup.WR2.photoUrl} alt={lineup.WR2.name} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-gray-900 truncate">{lineup.WR2.name}</div>
+                        <div className="text-xs text-gray-500">{lineup.WR2.team}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-gray-900">{lineup.WR2.projectedPoints?.toFixed(1) || "—"}</div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-gray-400 italic">Empty</div>
+                  )}
+                </div>
+
+                {/* TE */}
+                <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors" onClick={() => lineup.TE && setSelectedPlayer(lineup.TE)}>
+                  <div className="w-16 flex-shrink-0">
+                    <span className="px-3 py-1.5 bg-[#1A8CFF]/10 text-[#1A8CFF] rounded-full text-xs font-bold inline-block text-center min-w-[3rem]">
+                      TE
+                    </span>
+                  </div>
+                  {lineup.TE ? (
+                    <>
+                      {lineup.TE.photoUrl && (
+                        <img src={lineup.TE.photoUrl} alt={lineup.TE.name} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-gray-900 truncate">{lineup.TE.name}</div>
+                        <div className="text-xs text-gray-500">{lineup.TE.team}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-gray-900">{lineup.TE.projectedPoints?.toFixed(1) || "—"}</div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-gray-400 italic">Empty</div>
+                  )}
+                </div>
+
+                {/* FLEX */}
+                <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors" onClick={() => lineup.FLEX && setSelectedPlayer(lineup.FLEX)}>
+                  <div className="w-16 flex-shrink-0">
+                    <span className="px-3 py-1.5 bg-purple-500/10 text-purple-600 rounded-full text-xs font-bold inline-block text-center min-w-[3rem]">
+                      FLEX
+                    </span>
+                  </div>
+                  {lineup.FLEX ? (
+                    <>
+                      {lineup.FLEX.photoUrl && (
+                        <img src={lineup.FLEX.photoUrl} alt={lineup.FLEX.name} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-gray-900 truncate">{lineup.FLEX.name}</div>
+                        <div className="text-xs text-gray-500">{lineup.FLEX.position} • {lineup.FLEX.team}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-gray-900">{lineup.FLEX.projectedPoints?.toFixed(1) || "—"}</div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-gray-400 italic">Empty</div>
+                  )}
+                </div>
+
+                {/* D/ST */}
+                <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors" onClick={() => lineup.DST && setSelectedPlayer(lineup.DST)}>
+                  <div className="w-16 flex-shrink-0">
+                    <span className="px-3 py-1.5 bg-[#1A8CFF]/10 text-[#1A8CFF] rounded-full text-xs font-bold inline-block text-center min-w-[3rem]">
+                      D/ST
+                    </span>
+                  </div>
+                  {lineup.DST ? (
+                    <>
+                      {lineup.DST.photoUrl && (
+                        <img src={lineup.DST.photoUrl} alt={lineup.DST.name} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-gray-900 truncate">{lineup.DST.name}</div>
+                        <div className="text-xs text-gray-500">{lineup.DST.team}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-gray-900">{lineup.DST.projectedPoints?.toFixed(1) || "—"}</div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-gray-400 italic">Empty</div>
+                  )}
+                </div>
+
+                {/* K */}
+                <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors" onClick={() => lineup.K && setSelectedPlayer(lineup.K)}>
+                  <div className="w-16 flex-shrink-0">
+                    <span className="px-3 py-1.5 bg-[#1A8CFF]/10 text-[#1A8CFF] rounded-full text-xs font-bold inline-block text-center min-w-[3rem]">
+                      K
+                    </span>
+                  </div>
+                  {lineup.K ? (
+                    <>
+                      {lineup.K.photoUrl && (
+                        <img src={lineup.K.photoUrl} alt={lineup.K.name} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-semibold text-gray-900 truncate">{lineup.K.name}</div>
+                        <div className="text-xs text-gray-500">{lineup.K.team}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-gray-900">{lineup.K.projectedPoints?.toFixed(1) || "—"}</div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-sm text-gray-400 italic">Empty</div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Player List */}
+            {/* Bench Section */}
             <div>
-              <h3 className="text-sm font-semibold text-[#0B1E3D] mb-3">
-                All Players ({data.roster.length})
-              </h3>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tl-xl">
-                        Player
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Position
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Team
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Proj
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Avg
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                        Own%
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tr-xl">
-                        Status
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {data.roster.map((player, i) => (
-                      <tr
-                        key={i}
-                        className="hover:bg-gray-50 cursor-pointer"
-                        onClick={() => setSelectedPlayer(player)}
-                      >
-                        <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                          <div className="flex items-center gap-3">
-                            {player.photoUrl && (
-                              <img
-                                src={player.photoUrl}
-                                alt={player.name}
-                                className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
-                                onError={(e) => {
-                                  e.currentTarget.style.display = 'none';
-                                }}
-                              />
-                            )}
-                            <span>{player.name}</span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          <span className="px-2 py-1 bg-[#1A8CFF]/10 text-[#1A8CFF] rounded font-semibold">
-                            {player.position}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {player.team || "—"}
-                        </td>
-                        <td className="px-4 py-3 text-sm font-semibold text-gray-900">
-                          {player.projectedPoints ? player.projectedPoints.toFixed(1) : "—"}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {player.seasonStats?.averagePoints ? player.seasonStats.averagePoints.toFixed(1) : "—"}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600">
-                          {player.ownership ? `${player.ownership.toFixed(0)}%` : "—"}
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          {player.injuryStatus && player.injuryStatus !== "ACTIVE" ? (
-                            <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">
-                              {player.injuryStatus}
-                            </span>
-                          ) : (
-                            <span className="text-green-600 text-xs">✓</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="flex items-center justify-between mb-4 pb-2 border-b-2 border-gray-200">
+                <h3 className="text-sm font-bold text-[#0B1E3D] uppercase tracking-wide">
+                  Bench
+                </h3>
+                <span className="text-sm font-bold text-gray-600">SCORE</span>
+              </div>
+              <div className="space-y-2">
+                {lineup.BE.length > 0 ? lineup.BE.map((player, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors" onClick={() => setSelectedPlayer(player)}>
+                    <div className="w-16 flex-shrink-0">
+                      <span className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-full text-xs font-bold inline-block text-center min-w-[3rem]">
+                        BE
+                      </span>
+                    </div>
+                    {player.photoUrl && (
+                      <img src={player.photoUrl} alt={player.name} className="w-12 h-12 rounded-full object-cover border-2 border-gray-200" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-gray-900 truncate">{player.name}</div>
+                      <div className="text-xs text-gray-500">{player.position} • {player.team}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-bold text-gray-900">{player.projectedPoints?.toFixed(1) || "—"}</div>
+                    </div>
+                  </div>
+                )) : (
+                  <div className="text-sm text-gray-400 italic text-center py-4">No bench players</div>
+                )}
               </div>
             </div>
           </div>

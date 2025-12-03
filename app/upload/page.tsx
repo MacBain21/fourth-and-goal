@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createWorker } from "tesseract.js";
 
 interface ParsedData {
@@ -282,10 +283,19 @@ export default function UploadPage() {
             <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4">
               Upload Your League Data
             </h1>
-            <p className="text-xl text-white/80 max-w-2xl mx-auto">
+            <p className="text-xl text-white/80 max-w-2xl mx-auto mb-6">
               Record your ESPN app walkthrough or upload screenshots. We&apos;ll extract
               everything automatically.
             </p>
+            <Link
+              href="/connect"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#1A8CFF]/20 hover:bg-[#1A8CFF]/30 border border-[#1A8CFF]/40 hover:border-[#1A8CFF]/60 rounded-full text-white font-semibold transition-all duration-200"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Use ESPN Connect Instead (Recommended)
+            </Link>
           </div>
 
           {/* Upload Area */}
