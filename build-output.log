@@ -6,18 +6,42 @@
    - Environments: .env.local
 
    Creating an optimized production build ...
- ✓ Compiled successfully in 3.0s
+ ✓ Compiled successfully in 2.6s
    Linting and checking validity of types ...
-Failed to compile.
 
-./app/analysis/page.tsx:224:37
-Type error: Property 'photoUrl' does not exist on type '{ name: string; position: string; team?: string | undefined; projectedPoints?: number | undefined; }'.
+./app/analysis/page.tsx
+236:31  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+545:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
 
-[0m [90m 222 |[39m                         [33m<[39m[33mtd[39m className[33m=[39m[32m"px-4 py-3 text-sm font-medium text-gray-900"[39m[33m>[39m
- [90m 223 |[39m                           [33m<[39m[33mdiv[39m className[33m=[39m[32m"flex items-center gap-3"[39m[33m>[39m
-[31m[1m>[22m[39m[90m 224 |[39m                             {player[33m.[39mphotoUrl [33m&&[39m (
- [90m     |[39m                                     [31m[1m^[22m[39m
- [90m 225 |[39m                               [33m<[39m[33mimg[39m
- [90m 226 |[39m                                 src[33m=[39m{player[33m.[39mphotoUrl}
- [90m 227 |[39m                                 alt[33m=[39m{player[33m.[39mname}[0m
-Next.js build worker exited with code: 1 and signal: null
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+   Collecting page data ...
+   Generating static pages (0/14) ...
+   Generating static pages (3/14) 
+   Generating static pages (6/14) 
+   Generating static pages (10/14) 
+ ✓ Generating static pages (14/14)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                                 Size  First Load JS
+┌ ○ /                                      162 B         105 kB
+├ ○ /_not-found                            994 B         103 kB
+├ ○ /analysis                            38.2 kB         143 kB
+├ ƒ /api/analyze                           128 B         102 kB
+├ ƒ /api/compare                           128 B         102 kB
+├ ƒ /api/espn/league                       128 B         102 kB
+├ ○ /compare                             2.62 kB         105 kB
+├ ○ /connect                             3.58 kB         105 kB
+├ ○ /lineup                              2.39 kB         108 kB
+├ ○ /matchup                             2.23 kB         108 kB
+├ ○ /upload                              10.2 kB         112 kB
+└ ○ /waiver                              2.56 kB         108 kB
++ First Load JS shared by all             102 kB
+  ├ chunks/255-cf2e1d3491ac955b.js       45.8 kB
+  ├ chunks/4bd1b696-c023c6e3521b1417.js  54.2 kB
+  └ other shared chunks (total)          1.92 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
 
 interface ParsedData {
   scoringFormat?: string;
@@ -309,9 +310,9 @@ export default function AnalysisPage() {
                 </div>
               ) : aiAnalysis.overview ? (
                 <div className="prose prose-sm max-w-none">
-                  <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                    {aiAnalysis.overview}
-                  </p>
+                  <div className="text-sm text-gray-700 leading-relaxed markdown-content">
+                    <ReactMarkdown>{aiAnalysis.overview}</ReactMarkdown>
+                  </div>
                   <p className="text-xs text-gray-500 mt-4 italic">
                     🤖 Powered by GPT-4o
                   </p>
@@ -380,9 +381,9 @@ export default function AnalysisPage() {
                 </div>
               ) : aiAnalysis.lineup ? (
                 <div className="prose prose-sm max-w-none">
-                  <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                    {aiAnalysis.lineup}
-                  </p>
+                  <div className="text-sm text-gray-700 leading-relaxed markdown-content">
+                    <ReactMarkdown>{aiAnalysis.lineup}</ReactMarkdown>
+                  </div>
                   <p className="text-xs text-gray-500 mt-4 italic">
                     🤖 Powered by GPT-4o
                   </p>
@@ -444,9 +445,9 @@ export default function AnalysisPage() {
                 </div>
               ) : aiAnalysis.waiver ? (
                 <div className="prose prose-sm max-w-none">
-                  <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
-                    {aiAnalysis.waiver}
-                  </p>
+                  <div className="text-sm text-gray-700 leading-relaxed markdown-content">
+                    <ReactMarkdown>{aiAnalysis.waiver}</ReactMarkdown>
+                  </div>
                   <p className="text-xs text-gray-500 mt-4 italic">
                     🤖 Powered by GPT-4o
                   </p>
