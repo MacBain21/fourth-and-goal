@@ -27,6 +27,7 @@ export default function MatchupPage() {
   const [leagueName, setLeagueName] = useState<string>("");
   const [myTeamId, setMyTeamId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     // Load matchup data from localStorage
@@ -53,6 +54,61 @@ export default function MatchupPage() {
     }
     setLoading(false);
   }, []);
+
+  const refreshLeagueData = async () => {
+    setRefreshing(true);
+    try {
+      const espnConfig = localStorage.getItem("espnConfig");
+      if (!espnConfig) {
+        alert("No ESPN connection found. Please connect your league first.");
+        return;
+      }
+
+      const config = JSON.parse(espnConfig);
+      const response = await fetch("/api/espn/league", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(config),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to refresh league data");
+      }
+
+      const data = await response.json();
+      const espnData = {
+        scoringFormat: data.scoringFormat,
+        leagueSize: data.leagueSize,
+        roster: data.teams.find((t: any) => t.id === myTeamId)?.roster || [],
+        availablePlayers: data.availablePlayers,
+        rawText: `ESPN League ${data.leagueName}`,
+        espnData: {
+          leagueName: data.leagueName,
+          currentMatchupPeriod: data.currentMatchupPeriod,
+          teams: data.teams,
+          selectedTeamId: myTeamId,
+          matchups: data.matchups,
+        },
+      };
+
+      localStorage.setItem("leagueData", JSON.stringify(espnData));
+
+      // Reload the page data
+      setLeagueName(data.leagueName || "Your League");
+      setCurrentWeek(data.currentMatchupPeriod || 1);
+      const generatedMatchups = generateMatchups(
+        data.teams,
+        myTeamId!,
+        data.matchups || []
+      );
+      setMatchups(generatedMatchups);
+    } catch (error) {
+      console.error("Refresh error:", error);
+      alert("Failed to refresh league data. Please try again.");
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const generateMatchups = (teams: Team[], myId: number, matchupData: any[]): Matchup[] => {
     // Use real matchup data from ESPN
@@ -170,9 +226,19 @@ export default function MatchupPage() {
             <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4">
               {leagueName}
             </h1>
-            <p className="text-xl text-white/80 max-w-2xl mx-auto">
+            <p className="text-xl text-white/80 max-w-2xl mx-auto mb-6">
               See how every team stacks up this week
             </p>
+            <button
+              onClick={refreshLeagueData}
+              disabled={refreshing}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/30 hover:border-white/50 rounded-full text-white font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              {refreshing ? "Refreshing..." : "Refresh League Data"}
+            </button>
           </div>
 
           {/* Matchups Grid */}

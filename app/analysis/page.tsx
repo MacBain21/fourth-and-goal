@@ -37,6 +37,7 @@ export default function AnalysisPage() {
   const router = useRouter();
   const [data, setData] = useState<ParsedData | null>(null);
   const [selectedPlayer, setSelectedPlayer] = useState<any | null>(null);
+  const [editingSlot, setEditingSlot] = useState<string | null>(null);
   const [aiAnalysis, setAiAnalysis] = useState<{
     overview?: string;
     lineup?: string;
@@ -136,6 +137,27 @@ export default function AnalysisPage() {
     // Rest go to bench
     newLineup.BE = remaining;
 
+    setLineup(newLineup);
+  };
+
+  const swapPlayerToBench = (slot: string, player: any) => {
+    const newLineup = { ...lineup };
+    // @ts-ignore
+    newLineup[slot] = undefined;
+    newLineup.BE = [...newLineup.BE, player];
+    setLineup(newLineup);
+  };
+
+  const swapPlayerToStarter = (benchPlayer: any, targetSlot: string) => {
+    const newLineup = { ...lineup };
+    // @ts-ignore
+    const currentStarter = newLineup[targetSlot];
+    // @ts-ignore
+    newLineup[targetSlot] = benchPlayer;
+    newLineup.BE = newLineup.BE.filter(p => p.name !== benchPlayer.name);
+    if (currentStarter) {
+      newLineup.BE = [...newLineup.BE, currentStarter];
+    }
     setLineup(newLineup);
   };
 
@@ -269,7 +291,7 @@ export default function AnalysisPage() {
               </div>
               <div className="space-y-2">
                 {/* QB */}
-                <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl cursor-pointer transition-colors" onClick={() => lineup.QB && setSelectedPlayer(lineup.QB)}>
+                <div className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-xl transition-colors">
                   <div className="w-16 flex-shrink-0">
                     <span className="px-3 py-1.5 bg-[#1A8CFF]/10 text-[#1A8CFF] rounded-full text-xs font-bold inline-block text-center min-w-[3rem]">
                       QB
@@ -277,24 +299,32 @@ export default function AnalysisPage() {
                   </div>
                   {lineup.QB ? (
                     <>
-                      {lineup.QB.photoUrl && (
-                        <img
-                          src={lineup.QB.photoUrl}
-                          alt={lineup.QB.name}
-                          className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
-                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-gray-900 truncate">{lineup.QB.name}</div>
-                        <div className="text-xs text-gray-500">{lineup.QB.team}</div>
+                      <div className="flex items-center gap-3 flex-1 cursor-pointer" onClick={() => setSelectedPlayer(lineup.QB)}>
+                        {lineup.QB.photoUrl && (
+                          <img
+                            src={lineup.QB.photoUrl}
+                            alt={lineup.QB.name}
+                            className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-gray-900 truncate">{lineup.QB.name}</div>
+                          <div className="text-xs text-gray-500">{lineup.QB.team}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-gray-900">{lineup.QB.projectedPoints?.toFixed(1) || "—"}</div>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-bold text-gray-900">{lineup.QB.projectedPoints?.toFixed(1) || "—"}</div>
-                      </div>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setEditingSlot('QB'); }}
+                        className="px-3 py-1.5 text-xs font-semibold text-[#1A8CFF] hover:bg-[#1A8CFF]/10 rounded-lg transition-colors"
+                      >
+                        Swap
+                      </button>
                     </>
                   ) : (
-                    <div className="text-sm text-gray-400 italic">Empty</div>
+                    <div className="text-sm text-gray-400 italic flex-1">Empty</div>
                   )}
                 </div>
 
@@ -889,6 +919,79 @@ export default function AnalysisPage() {
               >
                 Close
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Swap Player Modal */}
+      {editingSlot && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6" onClick={() => setEditingSlot(null)}>
+          <div className="bg-white rounded-3xl p-8 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-2xl font-bold text-[#0B1E3D]">Swap {editingSlot}</h2>
+              <button
+                onClick={() => setEditingSlot(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {lineup.BE.filter(p => {
+                // Filter bench players that can fill this position
+                if (editingSlot === 'QB') return p.position === 'QB';
+                if (editingSlot === 'RB1' || editingSlot === 'RB2') return p.position === 'RB';
+                if (editingSlot === 'WR1' || editingSlot === 'WR2') return p.position === 'WR';
+                if (editingSlot === 'TE') return p.position === 'TE';
+                if (editingSlot === 'FLEX') return ['RB', 'WR', 'TE'].includes(p.position);
+                if (editingSlot === 'DST') return p.position === 'DEF';
+                if (editingSlot === 'K') return p.position === 'K';
+                return false;
+              }).map((player, i) => (
+                <button
+                  key={i}
+                  onClick={() => {
+                    swapPlayerToStarter(player, editingSlot);
+                    setEditingSlot(null);
+                  }}
+                  className="w-full flex items-center gap-3 p-4 hover:bg-[#1A8CFF]/10 rounded-xl transition-colors text-left"
+                >
+                  {player.photoUrl && (
+                    <img
+                      src={player.photoUrl}
+                      alt={player.name}
+                      className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  )}
+                  <div className="flex-1">
+                    <div className="font-semibold text-gray-900">{player.name}</div>
+                    <div className="text-sm text-gray-500">{player.position} • {player.team}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="font-bold text-[#1A8CFF]">{player.projectedPoints?.toFixed(1) || "—"}</div>
+                    <div className="text-xs text-gray-500">Proj</div>
+                  </div>
+                </button>
+              ))}
+              {lineup.BE.filter(p => {
+                if (editingSlot === 'QB') return p.position === 'QB';
+                if (editingSlot === 'RB1' || editingSlot === 'RB2') return p.position === 'RB';
+                if (editingSlot === 'WR1' || editingSlot === 'WR2') return p.position === 'WR';
+                if (editingSlot === 'TE') return p.position === 'TE';
+                if (editingSlot === 'FLEX') return ['RB', 'WR', 'TE'].includes(p.position);
+                if (editingSlot === 'DST') return p.position === 'DEF';
+                if (editingSlot === 'K') return p.position === 'K';
+                return false;
+              }).length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  No eligible bench players for this position
+                </div>
+              )}
             </div>
           </div>
         </div>
