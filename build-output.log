@@ -1,0 +1,23 @@
+
+> fourth-and-goal@0.1.0 build
+> next build
+
+   ▲ Next.js 15.5.6
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 3.0s
+   Linting and checking validity of types ...
+Failed to compile.
+
+./app/analysis/page.tsx:224:37
+Type error: Property 'photoUrl' does not exist on type '{ name: string; position: string; team?: string | undefined; projectedPoints?: number | undefined; }'.
+
+[0m [90m 222 |[39m                         [33m<[39m[33mtd[39m className[33m=[39m[32m"px-4 py-3 text-sm font-medium text-gray-900"[39m[33m>[39m
+ [90m 223 |[39m                           [33m<[39m[33mdiv[39m className[33m=[39m[32m"flex items-center gap-3"[39m[33m>[39m
+[31m[1m>[22m[39m[90m 224 |[39m                             {player[33m.[39mphotoUrl [33m&&[39m (
+ [90m     |[39m                                     [31m[1m^[22m[39m
+ [90m 225 |[39m                               [33m<[39m[33mimg[39m
+ [90m 226 |[39m                                 src[33m=[39m{player[33m.[39mphotoUrl}
+ [90m 227 |[39m                                 alt[33m=[39m{player[33m.[39mname}[0m
+Next.js build worker exited with code: 1 and signal: null

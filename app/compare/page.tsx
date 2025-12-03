@@ -12,6 +12,8 @@ interface Player {
 interface Team {
   id: number;
   name: string;
+  wins: number;
+  losses: number;
   roster: Player[];
 }
 

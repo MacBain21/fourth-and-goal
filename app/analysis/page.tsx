@@ -8,10 +8,20 @@ interface ParsedData {
   scoringFormat?: string;
   leagueSize?: number;
   roster: Array<{
+    id?: number;
     name: string;
     position: string;
     team?: string;
     projectedPoints?: number;
+    photoUrl?: string;
+    ownership?: number;
+    injuryStatus?: string;
+    seasonStats?: {
+      totalPoints?: number;
+      averagePoints?: number;
+    };
+    stats?: any[];
+    eligibleSlots?: number[];
   }>;
   availablePlayers: Array<{
     name: string;
@@ -335,7 +345,7 @@ export default function AnalysisPage() {
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 mt-4 italic">
-                    Click "Generate AI Analysis" below for detailed insights
+                    Click Generate AI Analysis below for detailed insights
                   </p>
                 </div>
               )}
@@ -399,7 +409,7 @@ export default function AnalysisPage() {
                     </div>
                   </div>
                   <p className="text-xs text-gray-500 mt-4 italic">
-                    Click "Generate AI Analysis" below for detailed insights
+                    Click Generate AI Analysis below for detailed insights
                   </p>
                 </div>
               )}
@@ -463,7 +473,7 @@ export default function AnalysisPage() {
                     )}
                   </div>
                   <p className="text-xs text-gray-500 mt-4 italic">
-                    Click "Generate AI Analysis" below for detailed insights
+                    Click Generate AI Analysis below for detailed insights
                   </p>
                 </div>
               )}
@@ -491,9 +501,9 @@ export default function AnalysisPage() {
                   AI-Powered Analysis
                 </h3>
                 <p className="text-sm text-gray-700">
-                  Click "Generate AI Analysis" below to get personalized insights from GPT-4o.
+                  Click Generate AI Analysis below to get personalized insights from GPT-4o.
                   The AI will analyze your roster composition, suggest optimal lineups based on
-                  matchups, and recommend top waiver wire targets tailored to your team's needs.
+                  matchups, and recommend top waiver wire targets tailored to your team&apos;s needs.
                 </p>
               </div>
             </div>
