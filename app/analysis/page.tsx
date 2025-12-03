@@ -25,6 +25,17 @@ interface ParsedData {
 export default function AnalysisPage() {
   const router = useRouter();
   const [data, setData] = useState<ParsedData | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<any | null>(null);
+  const [aiAnalysis, setAiAnalysis] = useState<{
+    overview?: string;
+    lineup?: string;
+    waiver?: string;
+  }>({});
+  const [loadingAnalysis, setLoadingAnalysis] = useState<{
+    overview: boolean;
+    lineup: boolean;
+    waiver: boolean;
+  }>({ overview: false, lineup: false, waiver: false });
 
   useEffect(() => {
     // Load data from localStorage
@@ -33,6 +44,43 @@ export default function AnalysisPage() {
       setData(JSON.parse(storedData));
     }
   }, []);
+
+  const generateAIAnalysis = async (type: "overview" | "lineup" | "waiver") => {
+    if (!data) return;
+
+    setLoadingAnalysis((prev) => ({ ...prev, [type]: true }));
+
+    try {
+      const response = await fetch("/api/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type,
+          data: {
+            scoringFormat: data.scoringFormat,
+            leagueSize: data.leagueSize,
+            roster: data.roster,
+            availablePlayers: data.availablePlayers,
+          },
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate analysis");
+      }
+
+      const result = await response.json();
+      setAiAnalysis((prev) => ({ ...prev, [type]: result.analysis }));
+    } catch (error) {
+      console.error("AI Analysis Error:", error);
+      setAiAnalysis((prev) => ({
+        ...prev,
+        [type]: "Failed to generate analysis. Please try again.",
+      }));
+    } finally {
+      setLoadingAnalysis((prev) => ({ ...prev, [type]: false }));
+    }
+  };
 
   if (!data) {
     return (
@@ -147,22 +195,70 @@ export default function AnalysisPage() {
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Position
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tr-xl">
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                         Team
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Proj
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Avg
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Own%
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider rounded-tr-xl">
+                        Status
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {data.roster.map((player, i) => (
-                      <tr key={i} className="hover:bg-gray-50">
+                      <tr
+                        key={i}
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onClick={() => setSelectedPlayer(player)}
+                      >
                         <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                          {player.name}
+                          <div className="flex items-center gap-3">
+                            {player.photoUrl && (
+                              <img
+                                src={player.photoUrl}
+                                alt={player.name}
+                                className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            )}
+                            <span>{player.name}</span>
+                          </div>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
-                          {player.position}
+                          <span className="px-2 py-1 bg-[#1A8CFF]/10 text-[#1A8CFF] rounded font-semibold">
+                            {player.position}
+                          </span>
                         </td>
                         <td className="px-4 py-3 text-sm text-gray-600">
                           {player.team || "—"}
+                        </td>
+                        <td className="px-4 py-3 text-sm font-semibold text-gray-900">
+                          {player.projectedPoints ? player.projectedPoints.toFixed(1) : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {player.seasonStats?.averagePoints ? player.seasonStats.averagePoints.toFixed(1) : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">
+                          {player.ownership ? `${player.ownership.toFixed(0)}%` : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-sm">
+                          {player.injuryStatus && player.injuryStatus !== "ACTIVE" ? (
+                            <span className="px-2 py-1 bg-red-100 text-red-700 rounded text-xs font-semibold">
+                              {player.injuryStatus}
+                            </span>
+                          ) : (
+                            <span className="text-green-600 text-xs">✓</span>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -196,35 +292,53 @@ export default function AnalysisPage() {
                   Roster Analysis
                 </h3>
               </div>
-              <div className="space-y-3">
-                <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-3">
-                  <p className="text-xs font-semibold text-green-700 mb-1">
-                    STRENGTHS
+              {loadingAnalysis.overview ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1A8CFF]"></div>
+                  <span className="ml-3 text-sm text-gray-600">Analyzing roster...</span>
+                </div>
+              ) : aiAnalysis.overview ? (
+                <div className="prose prose-sm max-w-none">
+                  <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                    {aiAnalysis.overview}
                   </p>
-                  <p className="text-sm text-gray-700">
-                    {rosterByPosition.RB >= 3
-                      ? "Strong RB depth"
-                      : rosterByPosition.WR >= 4
-                      ? "Deep WR corps"
-                      : "Balanced roster composition"}
+                  <p className="text-xs text-gray-500 mt-4 italic">
+                    🤖 Powered by GPT-4o
                   </p>
                 </div>
-                <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-xl p-3">
-                  <p className="text-xs font-semibold text-amber-700 mb-1">
-                    NEEDS ATTENTION
-                  </p>
-                  <p className="text-sm text-gray-700">
-                    {rosterByPosition.RB < 2
-                      ? "Consider adding RB depth"
-                      : rosterByPosition.WR < 3
-                      ? "WR depth could be improved"
-                      : "Monitor injury reports"}
+              ) : (
+                <div>
+                  <div className="space-y-3">
+                    <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-3">
+                      <p className="text-xs font-semibold text-green-700 mb-1">
+                        STRENGTHS
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        {rosterByPosition.RB >= 3
+                          ? "Strong RB depth"
+                          : rosterByPosition.WR >= 4
+                          ? "Deep WR corps"
+                          : "Balanced roster composition"}
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 rounded-xl p-3">
+                      <p className="text-xs font-semibold text-amber-700 mb-1">
+                        NEEDS ATTENTION
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        {rosterByPosition.RB < 2
+                          ? "Consider adding RB depth"
+                          : rosterByPosition.WR < 3
+                          ? "WR depth could be improved"
+                          : "Monitor injury reports"}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-4 italic">
+                    Click "Generate AI Analysis" below for detailed insights
                   </p>
                 </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-4 italic">
-                🤖 AI-powered insights coming soon
-              </p>
+              )}
             </div>
 
             {/* Start/Sit Recommendations */}
@@ -249,28 +363,46 @@ export default function AnalysisPage() {
                   Start/Sit
                 </h3>
               </div>
-              <div className="space-y-3">
-                <div className="bg-gradient-to-br from-[#1A8CFF]/10 to-[#1A8CFF]/20 border border-[#1A8CFF]/30 rounded-xl p-3">
-                  <p className="text-xs font-semibold text-[#1A8CFF] mb-1">
-                    RECOMMENDED STARTS
+              {loadingAnalysis.lineup ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1A8CFF]"></div>
+                  <span className="ml-3 text-sm text-gray-600">Analyzing lineup...</span>
+                </div>
+              ) : aiAnalysis.lineup ? (
+                <div className="prose prose-sm max-w-none">
+                  <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                    {aiAnalysis.lineup}
                   </p>
-                  <p className="text-sm text-gray-700">
-                    {data.roster.slice(0, 2).map((p) => p.name).join(", ") ||
-                      "Players TBD"}
+                  <p className="text-xs text-gray-500 mt-4 italic">
+                    🤖 Powered by GPT-4o
                   </p>
                 </div>
-                <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-3">
-                  <p className="text-xs font-semibold text-gray-700 mb-1">
-                    CONSIDER BENCHING
-                  </p>
-                  <p className="text-sm text-gray-700">
-                    Matchup-based recommendations will appear here
+              ) : (
+                <div>
+                  <div className="space-y-3">
+                    <div className="bg-gradient-to-br from-[#1A8CFF]/10 to-[#1A8CFF]/20 border border-[#1A8CFF]/30 rounded-xl p-3">
+                      <p className="text-xs font-semibold text-[#1A8CFF] mb-1">
+                        RECOMMENDED STARTS
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        {data.roster.slice(0, 2).map((p) => p.name).join(", ") ||
+                          "Players TBD"}
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-3">
+                      <p className="text-xs font-semibold text-gray-700 mb-1">
+                        CONSIDER BENCHING
+                      </p>
+                      <p className="text-sm text-gray-700">
+                        Matchup-based recommendations will appear here
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-4 italic">
+                    Click "Generate AI Analysis" below for detailed insights
                   </p>
                 </div>
-              </div>
-              <p className="text-xs text-gray-500 mt-4 italic">
-                🤖 AI-powered insights coming soon
-              </p>
+              )}
             </div>
 
             {/* Waiver Targets */}
@@ -295,36 +427,54 @@ export default function AnalysisPage() {
                   Waiver Targets
                 </h3>
               </div>
-              <div className="space-y-3">
-                {data.availablePlayers.slice(0, 3).map((player, i) => (
-                  <div key={i} className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-3">
-                    <p className="text-sm font-semibold text-[#0B1E3D]">
-                      {player.name}
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      {player.position} • {player.team || "Unknown"}
-                    </p>
+              {loadingAnalysis.waiver ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1A8CFF]"></div>
+                  <span className="ml-3 text-sm text-gray-600">Analyzing waiver wire...</span>
+                </div>
+              ) : aiAnalysis.waiver ? (
+                <div className="prose prose-sm max-w-none">
+                  <p className="text-sm text-gray-700 whitespace-pre-line leading-relaxed">
+                    {aiAnalysis.waiver}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-4 italic">
+                    🤖 Powered by GPT-4o
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  <div className="space-y-3">
+                    {data.availablePlayers.slice(0, 3).map((player, i) => (
+                      <div key={i} className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-3">
+                        <p className="text-sm font-semibold text-[#0B1E3D]">
+                          {player.name}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          {player.position} • {player.team || "Unknown"}
+                        </p>
+                      </div>
+                    ))}
+                    {data.availablePlayers.length === 0 && (
+                      <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-3">
+                        <p className="text-sm text-gray-600">
+                          Upload screenshots with available players to see recommendations
+                        </p>
+                      </div>
+                    )}
                   </div>
-                ))}
-                {data.availablePlayers.length === 0 && (
-                  <div className="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-200 rounded-xl p-3">
-                    <p className="text-sm text-gray-600">
-                      Upload screenshots with available players to see recommendations
-                    </p>
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 mt-4 italic">
-                🤖 AI-powered insights coming soon
-              </p>
+                  <p className="text-xs text-gray-500 mt-4 italic">
+                    Click "Generate AI Analysis" below for detailed insights
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* TODO: Wire to API Route */}
-          <div className="bg-gradient-to-br from-[#1A8CFF]/10 to-[#1A8CFF]/20 border-2 border-[#1A8CFF]/30 rounded-3xl p-6">
+          {/* AI Info */}
+          <div className="bg-gradient-to-br from-[#26D36B]/10 to-[#26D36B]/20 border-2 border-[#26D36B]/30 rounded-3xl p-6">
             <div className="flex items-start">
               <svg
-                className="w-6 h-6 text-[#1A8CFF] mt-0.5 mr-3 flex-shrink-0"
+                className="w-6 h-6 text-[#26D36B] mt-0.5 mr-3 flex-shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -333,19 +483,17 @@ export default function AnalysisPage() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"
                 />
               </svg>
               <div>
-                <h3 className="text-sm font-semibold text-[#1A8CFF] mb-1">
-                  Development Note
+                <h3 className="text-sm font-semibold text-[#26D36B] mb-1">
+                  AI-Powered Analysis
                 </h3>
                 <p className="text-sm text-gray-700">
-                  The current insights are placeholder data based on your parsed roster.
-                  In the next phase, this page will call an API route that sends your
-                  league data to an AI service (like OpenAI or Anthropic) to generate
-                  real, personalized recommendations. The code is structured to make this
-                  integration straightforward.
+                  Click "Generate AI Analysis" below to get personalized insights from GPT-4o.
+                  The AI will analyze your roster composition, suggest optimal lineups based on
+                  matchups, and recommend top waiver wire targets tailored to your team's needs.
                 </p>
               </div>
             </div>
@@ -361,16 +509,124 @@ export default function AnalysisPage() {
             </Link>
             <button
               onClick={() => {
-                // TODO: Trigger AI analysis
-                alert("AI analysis API integration coming soon!");
+                generateAIAnalysis("overview");
+                generateAIAnalysis("lineup");
+                generateAIAnalysis("waiver");
               }}
-              className="flex-1 bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] text-[#0B1E3D] py-3 px-6 rounded-2xl font-bold hover:shadow-2xl hover:shadow-[#26D36B]/30 transform hover:scale-105 transition-all duration-200"
+              disabled={loadingAnalysis.overview || loadingAnalysis.lineup || loadingAnalysis.waiver}
+              className="flex-1 bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] text-[#0B1E3D] py-3 px-6 rounded-2xl font-bold hover:shadow-2xl hover:shadow-[#26D36B]/30 transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              Refresh AI Analysis
+              {loadingAnalysis.overview || loadingAnalysis.lineup || loadingAnalysis.waiver
+                ? "Generating AI Analysis..."
+                : "Generate AI Analysis"}
             </button>
           </div>
         </div>
       </div>
+
+      {/* Player Detail Modal */}
+      {selectedPlayer && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6" onClick={() => setSelectedPlayer(null)}>
+          <div className="bg-white rounded-3xl p-8 shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-6">
+              <div className="flex items-center gap-4">
+                {selectedPlayer.photoUrl && (
+                  <img
+                    src={selectedPlayer.photoUrl}
+                    alt={selectedPlayer.name}
+                    className="w-24 h-24 rounded-full object-cover border-4 border-[#1A8CFF]"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://via.placeholder.com/96?text=NFL';
+                    }}
+                  />
+                )}
+                <div>
+                  <h2 className="text-3xl font-bold text-[#0B1E3D]">{selectedPlayer.name}</h2>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="px-3 py-1 bg-[#1A8CFF]/20 text-[#1A8CFF] rounded-full font-semibold text-sm">
+                      {selectedPlayer.position}
+                    </span>
+                    <span className="text-gray-600">{selectedPlayer.team}</span>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedPlayer(null)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-gradient-to-br from-[#1A8CFF]/10 to-[#1A8CFF]/20 border border-[#1A8CFF]/30 rounded-2xl p-4 text-center">
+                <div className="text-sm text-gray-600 mb-1">This Week</div>
+                <div className="text-3xl font-bold text-[#1A8CFF]">
+                  {selectedPlayer.projectedPoints ? selectedPlayer.projectedPoints.toFixed(1) : "—"}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">Projected</div>
+              </div>
+              <div className="bg-gradient-to-br from-[#26D36B]/10 to-[#26D36B]/20 border border-[#26D36B]/30 rounded-2xl p-4 text-center">
+                <div className="text-sm text-gray-600 mb-1">Season Avg</div>
+                <div className="text-3xl font-bold text-[#26D36B]">
+                  {selectedPlayer.seasonStats?.averagePoints ? selectedPlayer.seasonStats.averagePoints.toFixed(1) : "—"}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">PPG</div>
+              </div>
+              <div className="bg-gradient-to-br from-purple-500/10 to-purple-500/20 border border-purple-500/30 rounded-2xl p-4 text-center">
+                <div className="text-sm text-gray-600 mb-1">Ownership</div>
+                <div className="text-3xl font-bold text-purple-600">
+                  {selectedPlayer.ownership ? `${selectedPlayer.ownership.toFixed(0)}%` : "—"}
+                </div>
+                <div className="text-xs text-gray-500 mt-1">Rostered</div>
+              </div>
+            </div>
+
+            {/* Injury Status */}
+            {selectedPlayer.injuryStatus && selectedPlayer.injuryStatus !== "ACTIVE" && (
+              <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-4 mb-6">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-bold text-red-700">Injury Status: {selectedPlayer.injuryStatus}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Season Total */}
+            <div className="bg-gray-50 rounded-2xl p-6 mb-6">
+              <h3 className="text-lg font-bold text-[#0B1E3D] mb-3">Season Statistics</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-sm text-gray-600">Total Points</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {selectedPlayer.seasonStats?.totalPoints ? selectedPlayer.seasonStats.totalPoints.toFixed(1) : "—"}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-sm text-gray-600">Average Points</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {selectedPlayer.seasonStats?.averagePoints ? selectedPlayer.seasonStats.averagePoints.toFixed(1) : "—"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center">
+              <button
+                onClick={() => setSelectedPlayer(null)}
+                className="px-6 py-3 bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] text-white rounded-xl font-bold hover:shadow-lg transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

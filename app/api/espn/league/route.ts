@@ -11,8 +11,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Build the ESPN API URL
-    const url = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${seasonId}/segments/0/leagues/${leagueId}?view=mTeam&view=mRoster&view=mMatchup&view=mSettings`;
+    // Build the ESPN API URL - add kona_player_info to get free agents
+    const url = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${seasonId}/segments/0/leagues/${leagueId}?view=mTeam&view=mRoster&view=mMatchup&view=mSettings&view=kona_player_info`;
 
     // Prepare headers
     const headers: HeadersInit = {
@@ -33,10 +33,24 @@ export async function POST(request: NextRequest) {
 
     const espnData = await response.json();
 
-    // Transform ESPN data to our format
-    const transformedData = transformESPNData(espnData);
+    // Also fetch free agents (top available players)
+    const freeAgentsUrl = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${seasonId}/segments/0/leagues/${leagueId}?view=kona_player_info&scoringPeriodId=${espnData.scoringPeriodId || seasonId}`;
 
-    return NextResponse.json(transformedData);
+    let freeAgentsData = null;
+    try {
+      const freeAgentsResponse = await fetch(freeAgentsUrl, { headers });
+      if (freeAgentsResponse.ok) {
+        freeAgentsData = await freeAgentsResponse.json();
+      }
+    } catch (error) {
+      console.warn("Failed to fetch free agents, continuing without them:", error);
+    }
+
+    // Transform ESPN data to our format
+    // Return all teams data so user can select their team
+    const allTeamsData = transformESPNDataWithAllTeams(espnData, freeAgentsData);
+
+    return NextResponse.json(allTeamsData);
   } catch (error: any) {
     console.error("ESPN API Error:", error);
     return NextResponse.json(
@@ -46,44 +60,123 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function transformESPNData(espnData: any) {
-  // Get the user's team (first team for now - in production, you'd identify the user's team)
-  const myTeam = espnData.teams?.[0];
+function transformESPNDataWithAllTeams(espnData: any, freeAgentsData: any = null) {
+  const currentScoringPeriod = espnData.scoringPeriodId;
 
-  if (!myTeam) {
-    throw new Error("No team data found");
+  const teams = espnData.teams?.map((team: any) => {
+    const roster = team.roster?.entries?.map((entry: any) => {
+      const player = entry.playerPoolEntry?.player;
+
+      // Get current week projection
+      const currentWeekStats = player?.stats?.find((s: any) =>
+        s.scoringPeriodId === currentScoringPeriod && s.statSourceId === 1
+      );
+
+      // Get season stats
+      const seasonStats = player?.stats?.find((s: any) =>
+        s.statSourceId === 0 && s.scoringPeriodId === 0
+      );
+
+      return {
+        id: player?.id,
+        name: player?.fullName || "Unknown Player",
+        position: getPositionName(player?.defaultPositionId),
+        team: player?.proTeamId
+          ? getTeamAbbreviation(player.proTeamId)
+          : "FA",
+        projectedPoints: currentWeekStats?.appliedTotal || 0,
+        seasonStats: {
+          totalPoints: seasonStats?.appliedTotal || 0,
+          averagePoints: seasonStats?.appliedAverage || 0,
+        },
+        ownership: player?.ownership?.percentOwned || 0,
+        injuryStatus: player?.injuryStatus || "ACTIVE",
+        photoUrl: player?.id ? `https://a.espncdn.com/i/headshots/nfl/players/full/${player.id}.png` : null,
+        stats: player?.stats || [],
+        eligibleSlots: player?.eligibleSlots || [],
+      };
+    }) || [];
+
+    return {
+      id: team.id,
+      name: team.name || team.teamName || `${team.location || ''} ${team.nickname || ''}`.trim() || `Team ${team.id}`,
+      wins: team.record?.overall?.wins || 0,
+      losses: team.record?.overall?.losses || 0,
+      pointsFor: team.record?.overall?.pointsFor || 0,
+      roster,
+    };
+  }) || [];
+
+  // Extract free agents from player pool
+  let availablePlayers: any[] = [];
+  if (freeAgentsData?.players) {
+    // Get all rostered player IDs to filter them out
+    const rosteredPlayerIds = new Set(
+      teams.flatMap((team: any) =>
+        team.roster.map((p: any) => p.name)
+      )
+    );
+
+    availablePlayers = freeAgentsData.players
+      .filter((playerEntry: any) => {
+        const player = playerEntry.player;
+        const playerName = player?.fullName;
+
+        // Only include players who are not on any roster and have a valid position
+        return playerName &&
+               !rosteredPlayerIds.has(playerName) &&
+               player.defaultPositionId !== 0; // 0 is usually invalid
+      })
+      .slice(0, 50) // Get top 50 available players
+      .map((playerEntry: any) => {
+        const player = playerEntry.player;
+        return {
+          name: player.fullName || "Unknown Player",
+          position: getPositionName(player.defaultPositionId),
+          team: player.proTeamId
+            ? getTeamAbbreviation(player.proTeamId)
+            : "FA",
+          projectedPoints: player.stats?.find((s: any) => s.statSourceId === 1)?.appliedTotal || 0,
+        };
+      })
+      .sort((a: any, b: any) => (b.projectedPoints || 0) - (a.projectedPoints || 0)); // Sort by projected points
   }
 
-  // Extract roster
-  const roster = myTeam.roster?.entries?.map((entry: any) => ({
-    name: entry.playerPoolEntry?.player?.fullName || "Unknown Player",
-    position: getPositionName(entry.playerPoolEntry?.player?.defaultPositionId),
-    team: entry.playerPoolEntry?.player?.proTeamId
-      ? getTeamAbbreviation(entry.playerPoolEntry.player.proTeamId)
-      : "FA",
-    projectedPoints: entry.playerPoolEntry?.player?.stats?.find((s: any) => s.statSourceId === 1)?.appliedTotal || 0,
-  })) || [];
+  // Extract matchups from schedule
+  const matchups: any[] = [];
+  if (espnData.schedule) {
+    const currentWeekMatchups = espnData.schedule.filter(
+      (game: any) => game.matchupPeriodId === espnData.scoringPeriodId
+    );
 
-  // Get available players (free agents) - this would need a separate API call in production
-  const availablePlayers: any[] = [];
+    console.log('Current scoring period:', espnData.scoringPeriodId);
+    console.log('Found matchups for current week:', currentWeekMatchups.length);
+
+    currentWeekMatchups.forEach((game: any) => {
+      const homeTeam = teams.find((t: any) => t.id === game.home?.teamId);
+      const awayTeam = teams.find((t: any) => t.id === game.away?.teamId);
+
+      if (homeTeam && awayTeam) {
+        const matchup = {
+          homeTeamId: game.home.teamId,
+          awayTeamId: game.away.teamId,
+          homeProjected: game.home.totalProjectedPointsLive || game.home.totalPoints || 0,
+          awayProjected: game.away.totalProjectedPointsLive || game.away.totalPoints || 0,
+        };
+        console.log('Matchup:', homeTeam.name, 'vs', awayTeam.name, '|', matchup.homeProjected, '-', matchup.awayProjected);
+        matchups.push(matchup);
+      }
+    });
+  }
 
   return {
+    leagueName: espnData.settings?.name,
     scoringFormat: espnData.settings?.scoringSettings?.scoringType === 0 ? "Standard" : "PPR",
-    leagueSize: espnData.settings?.size || espnData.teams?.length || 10,
-    roster,
+    leagueSize: espnData.settings?.size || teams.length || 10,
+    currentMatchupPeriod: espnData.scoringPeriodId,
+    teams, // All teams with their rosters
     availablePlayers,
-    rawText: `ESPN League ${espnData.settings?.name || ""}`,
-    espnData: {
-      leagueName: espnData.settings?.name,
-      currentMatchupPeriod: espnData.scoringPeriodId,
-      teams: espnData.teams?.map((t: any) => ({
-        id: t.id,
-        name: `${t.location} ${t.nickname}`,
-        wins: t.record?.overall?.wins || 0,
-        losses: t.record?.overall?.losses || 0,
-        pointsFor: t.record?.overall?.pointsFor || 0,
-      })),
-    },
+    matchups, // Current week matchups
   };
 }
 

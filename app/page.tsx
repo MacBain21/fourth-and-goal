@@ -185,7 +185,7 @@ export default function Home() {
 
                 <div className="text-right mt-6">
                   <Link
-                    href="/analysis"
+                    href="/matchup"
                     className="inline-flex items-center px-6 py-3 bg-[#0B1E3D] text-white rounded-full text-sm font-semibold hover:bg-[#051639] transition-colors shadow-lg"
                   >
                     See All Matchups
@@ -268,7 +268,7 @@ export default function Home() {
                 Join thousands of managers using AI to make smarter fantasy football decisions every week.
               </p>
               <Link
-                href="/upload"
+                href="/connect"
                 className="inline-flex items-center justify-center px-10 py-5 bg-white text-[#0B1E3D] rounded-full font-bold text-lg shadow-2xl hover:shadow-white/50 hover:scale-105 transition-all duration-200"
               >
                 Get Started Free

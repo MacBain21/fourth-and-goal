@@ -52,24 +52,14 @@ export default function Navigation() {
               Overview
             </Link>
             <Link
-              href="/lineup"
+              href="/matchup"
               className={`relative px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${
-                isActive("/lineup")
+                isActive("/matchup")
                   ? "text-[#0B1E3D] bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] shadow-lg shadow-[#26D36B]/30"
                   : "text-white/80 hover:text-white hover:bg-white/10"
               }`}
             >
-              Lineup
-            </Link>
-            <Link
-              href="/waiver"
-              className={`relative px-4 py-2 text-sm font-semibold rounded-full transition-all duration-300 ${
-                isActive("/waiver")
-                  ? "text-[#0B1E3D] bg-gradient-to-r from-[#26D36B] to-[#1A8CFF] shadow-lg shadow-[#26D36B]/30"
-                  : "text-white/80 hover:text-white hover:bg-white/10"
-              }`}
-            >
-              Waiver Wire
+              Matchups
             </Link>
             <Link
               href="/compare"
@@ -79,7 +69,7 @@ export default function Navigation() {
                   : "text-white/80 hover:text-white hover:bg-white/10"
               }`}
             >
-              Compare
+              Trades
             </Link>
           </div>
         </div>

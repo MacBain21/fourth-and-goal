@@ -39,22 +39,29 @@ Provide:
         break;
 
       case "waiver":
-        systemMessage = `You are an expert fantasy football analyst specializing in waiver wire pickups. Identify high-value players and explain why they're worth adding.`;
-        prompt = `Analyze these available players and recommend waiver wire targets:
+        systemMessage = `You are an expert fantasy football analyst specializing in waiver wire pickups. Only recommend adds when the available player is clearly better than someone on the current roster. Always specify who to drop.`;
+        prompt = `Analyze these available players and recommend waiver wire moves ONLY if they are upgrades:
 
 Scoring Format: ${data.scoringFormat || "Standard"}
 League Size: ${data.leagueSize || "Unknown"} teams
 
-Current Roster:
-${data.roster.map((p: any) => `${p.name} (${p.position})`).join(", ")}
+Current Roster (with projected points):
+${data.roster.map((p: any) => `${p.name} (${p.position} - ${p.team || "Unknown"})${p.projectedPoints ? ` - Proj: ${p.projectedPoints.toFixed(1)}` : ""}`).join("\n")}
 
-Available Players:
-${data.availablePlayers.slice(0, 20).map((p: any) => `${p.name} (${p.position} - ${p.team || "Unknown"})`).join("\n")}
+Top Available Players (with projected points):
+${data.availablePlayers.slice(0, 30).map((p: any) => `${p.name} (${p.position} - ${p.team || "Unknown"})${p.projectedPoints ? ` - Proj: ${p.projectedPoints.toFixed(1)}` : ""}`).join("\n")}
 
-Provide:
-1. Top 3-5 must-add players with priority ranking
-2. Brief explanation for each (opportunity, matchup, trend)
-3. Which roster positions need the most help`;
+IMPORTANT INSTRUCTIONS:
+1. Only recommend adding a player if they are a clear upgrade over someone currently on the roster
+2. For each recommended add, you MUST specify exactly which player to drop
+3. Compare projected points and recent performance to justify the swap
+4. If there are no clear upgrades available, say "No recommended moves - your roster is stronger than the available options"
+5. Prioritize recommendations by position need and upside
+
+Format each recommendation as:
+ADD: [Player Name] ([Position] - [Team])
+DROP: [Player Name] ([Position] - [Team])
+REASON: [Brief explanation of why this is an upgrade]`;
         break;
 
       case "overview":
