@@ -100,44 +100,44 @@ export default function TradeAnalyzerPage() {
   };
 
   return (
-    <main className="min-h-screen py-12 bg-gradient-to-br from-[#000918] via-[#051639] to-[#020712]">
-      <div className="container mx-auto px-6">
+    <main className="min-h-screen py-8 sm:py-12 bg-gradient-to-br from-[#000918] via-[#051639] to-[#020712]">
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500/20 backdrop-blur-sm border border-purple-500/30 rounded-full mb-6">
-              <span className="text-2xl">🔄</span>
-              <span className="text-sm font-semibold text-purple-400">
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-purple-500/20 backdrop-blur-sm border border-purple-500/30 rounded-full mb-4 sm:mb-6">
+              <span className="text-xl sm:text-2xl">🔄</span>
+              <span className="text-xs sm:text-sm font-semibold text-purple-400">
                 AI-Powered Trade Analysis
               </span>
             </div>
-            <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-3 sm:mb-4 px-4">
               Trade Analyzer
             </h1>
-            <p className="text-xl text-white/80 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-2xl mx-auto px-4">
               Evaluate multi-player trades based on team needs and roster composition
             </p>
           </div>
 
           {/* Trade Partner Selection */}
           {!selectedTradePartner && (
-            <div className="bg-white rounded-3xl p-8 shadow-2xl mb-6">
-              <h2 className="text-2xl font-bold text-[#0B1E3D] mb-6">
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-2xl mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-[#0B1E3D] mb-4 sm:mb-6">
                 Select Trade Partner
               </h2>
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {allTeams
                   .filter((team) => team.id !== myTeamId)
                   .map((team) => (
                     <button
                       key={team.id}
                       onClick={() => setSelectedTradePartner(team)}
-                      className="text-left p-6 bg-gradient-to-br from-gray-50 to-gray-100 hover:from-purple-50 hover:to-purple-100 border-2 border-gray-200 hover:border-purple-400 rounded-2xl transition-all duration-200"
+                      className="text-left p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-gray-100 hover:from-purple-50 hover:to-purple-100 border-2 border-gray-200 hover:border-purple-400 rounded-xl sm:rounded-2xl transition-all duration-200"
                     >
-                      <h3 className="text-lg font-bold text-[#0B1E3D] mb-2">
+                      <h3 className="text-base sm:text-lg font-bold text-[#0B1E3D] mb-2">
                         {team.name}
                       </h3>
-                      <div className="flex items-center gap-3 text-sm text-gray-600">
+                      <div className="flex items-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600">
                         <span>{team.wins}-{team.losses}</span>
                         <span>•</span>
                         <span>{team.roster?.length || 0} players</span>
@@ -177,7 +177,7 @@ export default function TradeAnalyzerPage() {
                             </div>
                             <div className="text-sm text-gray-600">
                               {player.position} • {player.team || "FA"}
-                              {player.projectedPoints && ` • ${player.projectedPoints.toFixed(1)} pts`}
+                              {player.projectedPoints && ` • ${player.projectedPoints.toFixed(2)} pts`}
                             </div>
                           </div>
                           <button
@@ -254,7 +254,7 @@ export default function TradeAnalyzerPage() {
                             </div>
                             <div className="text-sm text-gray-600">
                               {player.position} • {player.team || "FA"}
-                              {player.projectedPoints && ` • ${player.projectedPoints.toFixed(1)} pts`}
+                              {player.projectedPoints && ` • ${player.projectedPoints.toFixed(2)} pts`}
                             </div>
                           </div>
                           <button

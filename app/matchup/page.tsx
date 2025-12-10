@@ -212,29 +212,29 @@ export default function MatchupPage() {
   }
 
   return (
-    <main className="min-h-screen py-12 bg-gradient-to-br from-[#000918] via-[#051639] to-[#020712]">
-      <div className="container mx-auto px-6">
+    <main className="min-h-screen py-8 sm:py-12 bg-gradient-to-br from-[#000918] via-[#051639] to-[#020712]">
+      <div className="container mx-auto px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#26D36B]/20 backdrop-blur-sm border border-[#26D36B]/30 rounded-full mb-6">
-              <span className="text-2xl">⚔️</span>
-              <span className="text-sm font-semibold text-[#26D36B]">
+          <div className="text-center mb-8 sm:mb-12">
+            <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-[#26D36B]/20 backdrop-blur-sm border border-[#26D36B]/30 rounded-full mb-4 sm:mb-6">
+              <span className="text-xl sm:text-2xl">⚔️</span>
+              <span className="text-xs sm:text-sm font-semibold text-[#26D36B]">
                 Week {currentWeek} Matchups
               </span>
             </div>
-            <h1 className="text-5xl md:text-6xl font-extrabold text-white mb-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-3 sm:mb-4 px-4">
               {leagueName}
             </h1>
-            <p className="text-xl text-white/80 max-w-2xl mx-auto mb-6">
+            <p className="text-base sm:text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-4 sm:mb-6 px-4">
               See how every team stacks up this week
             </p>
             <button
               onClick={refreshLeagueData}
               disabled={refreshing}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 border border-white/30 hover:border-white/50 rounded-full text-white font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white/10 hover:bg-white/20 border border-white/30 hover:border-white/50 rounded-full text-white text-sm sm:text-base font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
               {refreshing ? "Refreshing..." : "Refresh League Data"}
@@ -242,49 +242,50 @@ export default function MatchupPage() {
           </div>
 
           {/* Matchups Grid */}
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {matchups.map((matchup, index) => (
               <div
                 key={index}
-                className={`bg-white rounded-3xl p-8 shadow-2xl ${
+                className={`bg-white rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl ${
                   matchup.isMyMatchup
-                    ? "ring-4 ring-[#26D36B] ring-opacity-50"
+                    ? "ring-2 sm:ring-4 ring-[#26D36B] ring-opacity-50"
                     : ""
                 }`}
               >
                 {matchup.isMyMatchup && (
-                  <div className="flex items-center justify-center gap-2 mb-6">
-                    <div className="px-4 py-2 bg-[#26D36B] text-white rounded-full text-sm font-bold">
+                  <div className="flex items-center justify-center gap-2 mb-4 sm:mb-6">
+                    <div className="px-3 sm:px-4 py-1.5 sm:py-2 bg-[#26D36B] text-white rounded-full text-xs sm:text-sm font-bold">
                       YOUR MATCHUP
                     </div>
                   </div>
                 )}
 
-                <div className="grid md:grid-cols-3 gap-6 items-center">
+                <div className="grid md:grid-cols-3 gap-4 sm:gap-6 items-center">
                   {/* Home Team */}
                   <div className="text-center">
-                    <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl shadow-xl">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-3 sm:mb-4 flex items-center justify-center text-2xl sm:text-3xl shadow-xl">
                       {matchup.homeTeam.id === myTeamId ? "👑" : "👤"}
                     </div>
-                    <h3 className="text-xl font-bold text-[#0B1E3D] mb-2">
+                    <h3 className="text-lg sm:text-xl font-bold text-[#0B1E3D] mb-2 px-2">
                       {matchup.homeTeam.name}
                     </h3>
-                    <div className="flex items-center justify-center gap-3 text-sm text-gray-600 mb-4">
+                    <div className="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
                       <span className="font-semibold">
                         {matchup.homeTeam.wins}-{matchup.homeTeam.losses}
                       </span>
                       <span>•</span>
-                      <span>{matchup.homeTeam.pointsFor.toFixed(1)} PF</span>
+                      <span className="hidden sm:inline">{matchup.homeTeam.pointsFor.toFixed(2)} PF</span>
+                      <span className="sm:hidden">{matchup.homeTeam.pointsFor.toFixed(1)}</span>
                     </div>
-                    <div className="bg-gradient-to-br from-[#1A8CFF]/10 to-[#1A8CFF]/20 border border-[#1A8CFF]/30 rounded-2xl p-4">
-                      <div className="text-sm text-gray-600 mb-1">
+                    <div className="bg-gradient-to-br from-[#1A8CFF]/10 to-[#1A8CFF]/20 border border-[#1A8CFF]/30 rounded-xl sm:rounded-2xl p-3 sm:p-4">
+                      <div className="text-xs sm:text-sm text-gray-600 mb-1">
                         Projected
                       </div>
-                      <div className="text-3xl font-bold text-[#1A8CFF]">
+                      <div className="text-2xl sm:text-3xl font-bold text-[#1A8CFF]">
                         {matchup.homeProjected.toFixed(1)}
                       </div>
                       {matchup.winProbability >= 50 && (
-                        <div className="text-xs text-[#26D36B] font-semibold mt-2">
+                        <div className="text-xs text-[#26D36B] font-semibold mt-1 sm:mt-2">
                           ↑ Favored
                         </div>
                       )}
@@ -293,20 +294,20 @@ export default function MatchupPage() {
 
                   {/* VS & Win Probability */}
                   <div className="text-center">
-                    <div className="text-gray-300 font-extrabold text-2xl mb-6">
+                    <div className="text-gray-300 font-extrabold text-xl sm:text-2xl mb-4 sm:mb-6">
                       VS
                     </div>
 
                     {/* Win Probability Bar */}
-                    <div className="bg-gray-100 rounded-xl p-4">
-                      <div className="flex justify-between text-xs mb-3 text-gray-600">
-                        <span>Win Probability</span>
-                        <span className="text-[#1A8CFF] font-bold">
+                    <div className="bg-gray-100 rounded-lg sm:rounded-xl p-3 sm:p-4">
+                      <div className="flex justify-between text-xs mb-2 sm:mb-3 text-gray-600">
+                        <span className="text-[10px] sm:text-xs">Win Probability</span>
+                        <span className="text-[#1A8CFF] font-bold text-[10px] sm:text-xs">
                           {matchup.winProbability.toFixed(0)}% /{" "}
                           {(100 - matchup.winProbability).toFixed(0)}%
                         </span>
                       </div>
-                      <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+                      <div className="h-2 sm:h-3 bg-gray-200 rounded-full overflow-hidden">
                         <div
                           className="h-full bg-gradient-to-r from-[#1A8CFF] to-[#26D36B] rounded-full transition-all duration-500"
                           style={{ width: `${matchup.winProbability}%` }}
@@ -314,35 +315,36 @@ export default function MatchupPage() {
                       </div>
                     </div>
 
-                    <div className="text-xs text-gray-500 mt-4">
+                    <div className="text-[10px] sm:text-xs text-gray-500 mt-3 sm:mt-4">
                       Based on projected points
                     </div>
                   </div>
 
                   {/* Away Team */}
                   <div className="text-center">
-                    <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl shadow-xl">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-orange-500 to-red-600 rounded-full mx-auto mb-3 sm:mb-4 flex items-center justify-center text-2xl sm:text-3xl shadow-xl">
                       {matchup.awayTeam.id === myTeamId ? "👑" : "👤"}
                     </div>
-                    <h3 className="text-xl font-bold text-[#0B1E3D] mb-2">
+                    <h3 className="text-lg sm:text-xl font-bold text-[#0B1E3D] mb-2 px-2">
                       {matchup.awayTeam.name}
                     </h3>
-                    <div className="flex items-center justify-center gap-3 text-sm text-gray-600 mb-4">
+                    <div className="flex items-center justify-center gap-2 sm:gap-3 text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
                       <span className="font-semibold">
                         {matchup.awayTeam.wins}-{matchup.awayTeam.losses}
                       </span>
                       <span>•</span>
-                      <span>{matchup.awayTeam.pointsFor.toFixed(1)} PF</span>
+                      <span className="hidden sm:inline">{matchup.awayTeam.pointsFor.toFixed(2)} PF</span>
+                      <span className="sm:hidden">{matchup.awayTeam.pointsFor.toFixed(1)}</span>
                     </div>
-                    <div className="bg-gradient-to-br from-[#26D36B]/10 to-[#26D36B]/20 border border-[#26D36B]/30 rounded-2xl p-4">
-                      <div className="text-sm text-gray-600 mb-1">
+                    <div className="bg-gradient-to-br from-[#26D36B]/10 to-[#26D36B]/20 border border-[#26D36B]/30 rounded-xl sm:rounded-2xl p-3 sm:p-4">
+                      <div className="text-xs sm:text-sm text-gray-600 mb-1">
                         Projected
                       </div>
-                      <div className="text-3xl font-bold text-[#26D36B]">
+                      <div className="text-2xl sm:text-3xl font-bold text-[#26D36B]">
                         {matchup.awayProjected.toFixed(1)}
                       </div>
                       {matchup.winProbability < 50 && (
-                        <div className="text-xs text-[#26D36B] font-semibold mt-2">
+                        <div className="text-xs text-[#26D36B] font-semibold mt-1 sm:mt-2">
                           ↑ Favored
                         </div>
                       )}
@@ -354,8 +356,8 @@ export default function MatchupPage() {
           </div>
 
           {/* Info Banner */}
-          <div className="mt-12 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 text-center">
-            <p className="text-white/70 text-sm">
+          <div className="mt-8 sm:mt-12 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-center">
+            <p className="text-white/70 text-xs sm:text-sm">
               💡 Tip: Projected points are calculated from your ESPN roster data. Win probabilities are estimates based on current projections.
             </p>
           </div>
